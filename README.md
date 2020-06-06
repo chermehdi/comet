@@ -1,3 +1,5 @@
+![Comet build status](https://github.com/chermehdi/comet/workflows/Go/badge.svg?branch=master)
+
 # Comet programming language 
 
 ![comet programming language](./comet.png)
