@@ -60,13 +60,41 @@ func (p *PrintingVisitor) VisitNumberLiteral(expression parser.NumberLiteralExpr
 	p.buffer.WriteString(fmt.Sprintf("Visiting a Number (%d)\n", expression.ActualValue))
 }
 
+func (p *PrintingVisitor) VisitParenthesisedExpression(expression parser.ParenthesisedExpression) {
+	p.printIndent()
+	p.buffer.WriteString("ParenthesisedExpression \n")
+	p.indent += IndentWidth
+	expression.Expression.Accept(p)
+	p.indent -= IndentWidth
+}
 
 func (p *PrintingVisitor) String() string {
 	return p.buffer.String()
 }
 
+func (p *PrintingVisitor) VisitDeclarationStatement(statement parser.DeclarationStatement) {
+	p.printIndent()
+	p.buffer.WriteString(fmt.Sprintf("DeclarationStatement(%s)\n", statement.Identifier.Literal))
+	p.indent += IndentWidth
+	statement.Expression.Accept(p)
+	p.indent -= IndentWidth
+}
+
+func (p *PrintingVisitor) VisitIdentifierExpression(expression parser.IdentifierExpression) {
+	p.printIndent()
+	p.buffer.WriteString(fmt.Sprintf("IdentifierExpression(%s)\n", expression.Name))
+}
+
+func (p *PrintingVisitor) VisitReturnStatement(statement parser.ReturnStatement) {
+	p.printIndent()
+	p.buffer.WriteString("ReturnStatement\n")
+	p.indent += IndentWidth
+	statement.Expression.Accept(p)
+	p.indent -= IndentWidth
+}
+
 func main() {
-	src := "1 * 2 + 3 - 2"
+	src := `return (1 + 2 * a)`
 	rootNode := parser.New(src).Parse()
 	visitor := &PrintingVisitor{}
 	rootNode.Accept(visitor)

@@ -17,6 +17,10 @@ type NodeVisitor interface {
 	VisitBinaryExpression(BinaryExpression)
 	VisitPrefixExpression(PrefixExpression)
 	VisitNumberLiteral(NumberLiteralExpression)
+	VisitParenthesisedExpression(ParenthesisedExpression)
+	VisitDeclarationStatement(DeclarationStatement)
+	VisitIdentifierExpression(IdentifierExpression)
+	VisitReturnStatement(statement ReturnStatement)
 }
 
 type Node interface {
@@ -115,5 +119,80 @@ func (p *PrefixExpression) Statement() {
 }
 
 func (p *PrefixExpression) Expr() {
+	panic("implement me")
+}
+
+type ParenthesisedExpression struct {
+	Expression Expression
+}
+
+func (p *ParenthesisedExpression) Literal() string {
+	panic("implement me")
+}
+
+func (p *ParenthesisedExpression) Accept(visitor NodeVisitor) {
+	visitor.VisitParenthesisedExpression(*p)
+}
+
+func (p *ParenthesisedExpression) Statement() {
+	panic("implement me")
+}
+
+func (p *ParenthesisedExpression) Expr() {
+	panic("implement me")
+}
+
+type IdentifierExpression struct {
+	Name string
+}
+
+func (i *IdentifierExpression) Literal() string {
+	panic("implement me")
+}
+
+func (i *IdentifierExpression) Accept(visitor NodeVisitor) {
+	visitor.VisitIdentifierExpression(*i)
+}
+
+func (i *IdentifierExpression) Statement() {
+	panic("implement me")
+}
+
+func (i *IdentifierExpression) Expr() {
+	panic("implement me")
+}
+
+type DeclarationStatement struct {
+	varToken   lexer.Token
+	Identifier lexer.Token
+	Expression Expression
+}
+
+func (d *DeclarationStatement) Literal() string {
+	panic("implement me")
+}
+
+func (d *DeclarationStatement) Accept(visitor NodeVisitor) {
+	visitor.VisitDeclarationStatement(*d)
+}
+
+func (d *DeclarationStatement) Statement() {
+	panic("implement me")
+}
+
+type ReturnStatement struct {
+	returnToken lexer.Token
+	Expression  Expression
+}
+
+func (d *ReturnStatement) Literal() string {
+	panic("implement me")
+}
+
+func (d *ReturnStatement) Accept(visitor NodeVisitor) {
+	visitor.VisitReturnStatement(*d)
+}
+
+func (d *ReturnStatement) Statement() {
 	panic("implement me")
 }
