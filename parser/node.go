@@ -2,6 +2,14 @@ package parser
 
 import "github.com/chermehdi/comet/lexer"
 
+// API provided for all nodes types.
+// Implementing a visitor will allow you to traverse the AST and perform some operation (printing, testing, code generation...)
+// Without changing the Actual logic inside the AST.
+//
+// Example:
+//    var visitor MyVisitor
+//    rootNode.Accept(visitor)
+//    visitor.getResult()
 type NodeVisitor interface {
 	VisitExpression(Expression)
 	VisitStatement(Statement)

@@ -56,6 +56,8 @@ func New(src string) *Parser {
 	return parser
 }
 
+// Initialize the state of the parser
+// Register the prefix and binary parsing functions and initializes first 2 tokens (current and next)
 func (p *Parser) init() {
 	p.advance()
 	p.advance()
@@ -78,14 +80,17 @@ func (p *Parser) registerBinaryFunc(fun binaryParseFunction, tokenTypes ...lexer
 	}
 }
 
+// Changes the current token to the next token.
 func (p *Parser) advance() {
 	p.CurrentToken = p.NextToken
 	p.NextToken = p.lexer.Next()
 }
 
+// Parse the program and return a RootNode representing the root of the AST.
 func (p *Parser) Parse() *RootNode {
 	statements := make([]Statement, 0)
-	for ; p.CurrentToken.Type != lexer.EOF; {
+	for p.CurrentToken.Type != lexer.EOF {
+		// TODO: function based language is better in this context.
 		statement := p.parseStatement()
 		if statement != nil {
 			statements = append(statements, statement)
