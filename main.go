@@ -13,9 +13,21 @@ type PrintingVisitor struct {
 	buffer bytes.Buffer
 }
 
+func (p *PrintingVisitor) VisitIfStatement(statement parser.IfStatement) {
+	p.printIndent()
+	p.buffer.WriteString("IfStatement\n")
+	p.indent += IndentWidth
+	statement.Test.Accept(p)
+	p.buffer.WriteString("(Then)")
+	statement.Then.Accept(p)
+	p.buffer.WriteString("(Else)")
+	statement.Else.Accept(p)
+	p.indent -= IndentWidth
+}
+
 func (p *PrintingVisitor) VisitBlockStatement(statement parser.BlockStatement) {
 	p.printIndent()
-	p.buffer.WriteString("BlockStatement{}\n")
+	p.buffer.WriteString("BlockStatement\n")
 	p.indent += IndentWidth
 	for _, statement := range statement.Statements {
 		statement.Accept(p)
@@ -39,7 +51,7 @@ func (p *PrintingVisitor) VisitStatement(statement parser.Statement) {
 
 func (p *PrintingVisitor) VisitRootNode(node parser.RootNode) {
 	p.printIndent()
-	p.buffer.WriteString("Visiting a RootNode\n")
+	p.buffer.WriteString("RootNode\n")
 	p.indent += IndentWidth
 	for _, st := range node.Statements {
 		st.Accept(p)
@@ -58,7 +70,7 @@ func (p *PrintingVisitor) VisitBinaryExpression(expression parser.BinaryExpressi
 
 func (p *PrintingVisitor) VisitPrefixExpression(expression parser.PrefixExpression) {
 	p.printIndent()
-	p.buffer.WriteString("Visiting a PrefixExpression\n")
+	p.buffer.WriteString("PrefixExpression\n")
 	p.indent += IndentWidth
 	expression.Right.Accept(p)
 	expression.Right.Accept(p)
@@ -72,7 +84,7 @@ func (p *PrintingVisitor) VisitNumberLiteral(expression parser.NumberLiteralExpr
 
 func (p *PrintingVisitor) VisitParenthesisedExpression(expression parser.ParenthesisedExpression) {
 	p.printIndent()
-	p.buffer.WriteString("ParenthesisedExpression \n")
+	p.buffer.WriteString("ParenthesisedExpression\n")
 	p.indent += IndentWidth
 	expression.Expression.Accept(p)
 	p.indent -= IndentWidth
@@ -109,14 +121,10 @@ func (p *PrintingVisitor) VisitBooleanLiteral(literal parser.BooleanLiteral) {
 }
 
 func main() {
-	src := `{
-	{
-		var a = 1 + 2
-	}
-	{
-		var b = 1 + 2
-	}
-	return a
+	src := `
+	if a == 1 {
+} else {
+	var a = 12
 }
 `
 	rootNode := parser.New(src).Parse()

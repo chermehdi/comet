@@ -74,7 +74,7 @@ func (p *Parser) init() {
 
 	p.registerPrefixFunc(p.parseNumberLiteral, lexer.Number)
 	p.registerPrefixFunc(p.parseIdentifier, lexer.Identifier)
-	p.registerPrefixFunc(p.ParseBoolean, lexer.True, lexer.False)
+	p.registerPrefixFunc(p.parseBoolean, lexer.True, lexer.False)
 	p.registerPrefixFunc(p.parseParenthesisedExpression, lexer.OpenParent)
 
 	p.registerBinaryFunc(p.parseBinaryExpression, lexer.Plus, lexer.Mul, lexer.Minus, lexer.Div,
@@ -126,7 +126,9 @@ func (p *Parser) parseStatement() Statement {
 	case lexer.Return:
 		return p.parseReturnStatement()
 	case lexer.OpenBrace:
-		return p.ParseBlockStatement()
+		return p.parseBlockStatement()
+	case lexer.If:
+		return p.parseIfStatement()
 	default:
 		return p.parseExpression()
 	}
@@ -219,7 +221,7 @@ func (p *Parser) parseInternal(currentPrecedence int) Expression {
 	return left
 }
 
-func (p *Parser) ParseBlockStatement() Statement {
+func (p *Parser) parseBlockStatement() *BlockStatement {
 	blockStatement := &BlockStatement{}
 	statements := make([]Statement, 0)
 	p.advanceExpect(lexer.OpenBrace)
@@ -236,6 +238,30 @@ func (p *Parser) ParseBlockStatement() Statement {
 	return blockStatement
 }
 
+func (p *Parser) parseBoolean() Expression {
+	return &BooleanLiteral{
+		ActualValue: p.CurrentToken.Type == lexer.True,
+		Token:       p.CurrentToken,
+	}
+}
+
+func (p *Parser) parseIfStatement() Statement {
+	ifStatement := newIfStatement()
+
+	p.advanceExpect(lexer.If)
+	ifStatement.Test = p.parseExpression()
+	p.expectNext(lexer.OpenBrace)
+
+	ifStatement.Then = *p.parseBlockStatement()
+	p.advanceExpect(lexer.CloseBrace)
+
+	if p.CurrentToken.Type == lexer.Else {
+		p.advanceExpect(lexer.Else)
+		ifStatement.Else = *p.parseBlockStatement()
+	}
+	return ifStatement
+}
+
 func (p *Parser) advanceExpect(expected lexer.TokenType) {
 	if p.CurrentToken.Type != expected {
 		panic(fmt.Sprintf("Expected %s got %s", expected, p.CurrentToken.Literal))
@@ -248,11 +274,4 @@ func (p *Parser) expectNext(expected lexer.TokenType) {
 		panic(fmt.Sprintf("Expected %s got %s", expected, p.CurrentToken.Literal))
 	}
 	p.advance()
-}
-
-func (p *Parser) ParseBoolean() Expression {
-	return &BooleanLiteral{
-		ActualValue: p.CurrentToken.Type == lexer.True,
-		Token:       p.CurrentToken,
-	}
 }

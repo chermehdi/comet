@@ -92,12 +92,22 @@ func (t *TestingVisitor) VisitReturnStatement(statement ReturnStatement) {
 
 func (t *TestingVisitor) VisitBlockStatement(statement BlockStatement) {
 	currentNode := t.expected[t.ptr]
-	blockStatement, ok := currentNode.(*BlockStatement)
+	_, ok := currentNode.(*BlockStatement)
 	assert.True(t.t, ok)
 	t.ptr++
-	for _, statement := range blockStatement.Statements {
+	for _, statement := range statement.Statements {
 		statement.Accept(t)
 	}
+}
+
+func (t *TestingVisitor) VisitIfStatement(statement IfStatement) {
+	currentNode := t.expected[t.ptr]
+	_, ok := currentNode.(*IfStatement)
+	assert.True(t.t, ok)
+	t.ptr++
+	statement.Test.Accept(t)
+	statement.Then.Accept(t)
+	statement.Else.Accept(t)
 }
 
 func (t *TestingVisitor) VisitBooleanLiteral(literal BooleanLiteral) {
@@ -508,6 +518,7 @@ func TestParser_ParseBlockStatement(t *testing.T) {
 				&NumberLiteralExpression{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
 				&NumberLiteralExpression{ActualValue: int64(2)},
+				&BlockStatement{},
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "b"},
 				},
@@ -531,5 +542,81 @@ func TestParser_ParseBlockStatement(t *testing.T) {
 		}
 		rootNode.Accept(testingVisitor)
 	}
+}
 
+func TestParser_ParseIfStatement(t *testing.T) {
+	tests := []struct {
+		Expr     string
+		Expected []Node
+	}{
+		{
+			Expr: `
+				if a == 1 {
+				}
+`,
+			Expected: []Node{
+				&IfStatement{},
+				&IdentifierExpression{Name: "a"},
+				&BinaryExpression{Op: lexer.Token{Literal: "=="}},
+				&NumberLiteralExpression{ActualValue: int64(1)},
+				&BlockStatement{},
+				&BlockStatement{}, // accounting for the then empty block.
+			},
+		},
+		{
+			Expr: `
+				if a == 1 {
+					var a = 1 + 2	
+				}else {}
+`,
+			Expected: []Node{
+				&IfStatement{},
+				&IdentifierExpression{Name: "a"},
+				&BinaryExpression{Op: lexer.Token{Literal: "=="}},
+				&NumberLiteralExpression{ActualValue: int64(1)},
+				&BlockStatement{}, // if close
+				&DeclarationStatement{
+					Identifier: lexer.Token{Literal: "a"},
+				},
+				&NumberLiteralExpression{ActualValue: int64(1)},
+				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&NumberLiteralExpression{ActualValue: int64(2)},
+				&BlockStatement{}, // accounting for the then empty block.
+			},
+		},
+		{
+			Expr: `
+				if (a == b) {
+					var a = 1 + 2	
+				}else {}
+`,
+			Expected: []Node{
+				&IfStatement{},
+				&ParenthesisedExpression{},
+				&IdentifierExpression{Name: "a"},
+				&BinaryExpression{Op: lexer.Token{Literal: "=="}},
+				&IdentifierExpression{Name: "b"},
+				&BlockStatement{}, // if close
+				&DeclarationStatement{
+					Identifier: lexer.Token{Literal: "a"},
+				},
+				&NumberLiteralExpression{ActualValue: int64(1)},
+				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&NumberLiteralExpression{ActualValue: int64(2)},
+				&BlockStatement{}, // accounting for the then empty block.
+			},
+		},
+	}
+
+	for _, test := range tests {
+		parser := New(test.Expr)
+		rootNode := parser.Parse()
+		assert.NotNil(t, rootNode)
+		testingVisitor := &TestingVisitor{
+			expected: test.Expected,
+			ptr:      0,
+			t:        t,
+		}
+		rootNode.Accept(testingVisitor)
+	}
 }

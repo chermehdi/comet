@@ -23,8 +23,9 @@ type NodeVisitor interface {
 	VisitIdentifierExpression(IdentifierExpression)
 
 	VisitDeclarationStatement(DeclarationStatement)
-	VisitReturnStatement(statement ReturnStatement)
-	VisitBlockStatement(statement BlockStatement)
+	VisitReturnStatement(ReturnStatement)
+	VisitBlockStatement(BlockStatement)
+	VisitIfStatement(IfStatement)
 }
 
 type Node interface {
@@ -222,6 +223,12 @@ func (b *BooleanLiteral) Expr() {
 	panic("implement me")
 }
 
+// Empty block for AST nodes when the block statement is optional
+// This is instance is used to make the comparison easy.
+var EmptyBlock = &BlockStatement{
+	Statements: []Statement{},
+}
+
 type BlockStatement struct {
 	Statements []Statement
 }
@@ -236,4 +243,29 @@ func (b *BlockStatement) Accept(visitor NodeVisitor) {
 
 func (b *BlockStatement) Statement() {
 	panic("implement me")
+}
+
+type IfStatement struct {
+	Test Expression
+	Then BlockStatement // this can be empty
+	Else BlockStatement // this can be empty
+}
+
+func (i *IfStatement) Literal() string {
+	return "IfStatement"
+}
+
+func (i *IfStatement) Accept(visitor NodeVisitor) {
+	visitor.VisitIfStatement(*i)
+}
+
+func (i *IfStatement) Statement() {
+	panic("implement me")
+}
+
+func newIfStatement() *IfStatement {
+	return &IfStatement{
+		Then: *EmptyBlock,
+		Else: *EmptyBlock,
+	}
 }
