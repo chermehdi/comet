@@ -8,6 +8,7 @@ import (
 
 const (
 	MINIMUM = 0
+	LOG     = 1
 	ADD     = 1
 	MUL     = 2
 	PARENT  = 3
@@ -18,6 +19,12 @@ var precedences = map[lexer.TokenType]int{
 	lexer.Minus: ADD,
 	lexer.Mul:   MUL,
 	lexer.Div:   MUL,
+	lexer.LT:    LOG,
+	lexer.LTE:   LOG,
+	lexer.GT:    LOG,
+	lexer.GTE:   LOG,
+	lexer.EQ:    LOG,
+	lexer.NEQ:   LOG,
 }
 
 func getPrecedence(token lexer.Token) int {
@@ -67,8 +74,11 @@ func (p *Parser) init() {
 
 	p.registerPrefixFunc(p.parseNumberLiteral, lexer.Number)
 	p.registerPrefixFunc(p.parseIdentifier, lexer.Identifier)
-	p.registerPrefixFunc(p.ParseParenthesised, lexer.OpenParent)
-	p.registerBinaryFunc(p.parseBinaryExpression, lexer.Plus, lexer.Mul, lexer.Minus, lexer.Div)
+	p.registerPrefixFunc(p.ParseBoolean, lexer.True, lexer.False)
+	p.registerPrefixFunc(p.parseParenthesisedExpression, lexer.OpenParent)
+
+	p.registerBinaryFunc(p.parseBinaryExpression, lexer.Plus, lexer.Mul, lexer.Minus, lexer.Div,
+		lexer.GT, lexer.GTE, lexer.LT, lexer.LTE, lexer.EQ, lexer.NEQ)
 }
 
 // Utility method to enable prefix function registration for given token types.
@@ -115,6 +125,8 @@ func (p *Parser) parseStatement() Statement {
 		return p.parseDeclaration()
 	case lexer.Return:
 		return p.parseReturnStatement()
+	case lexer.OpenBrace:
+		return p.ParseBlockStatement()
 	default:
 		return p.parseExpression()
 	}
@@ -164,7 +176,7 @@ func (p *Parser) parseIdentifier() Expression {
 }
 
 // any expression of the form ( expression )
-func (p *Parser) ParseParenthesised() Expression {
+func (p *Parser) parseParenthesisedExpression() Expression {
 	// (expression)
 	p.advanceExpect(lexer.OpenParent)
 	expression := p.parseExpression()
@@ -207,6 +219,23 @@ func (p *Parser) parseInternal(currentPrecedence int) Expression {
 	return left
 }
 
+func (p *Parser) ParseBlockStatement() Statement {
+	blockStatement := &BlockStatement{}
+	statements := make([]Statement, 0)
+	p.advanceExpect(lexer.OpenBrace)
+	for p.CurrentToken.Type != lexer.CloseBrace && p.CurrentToken.Type != lexer.EOF {
+		curStatement := p.parseStatement()
+		if curStatement == nil {
+			// TODO: probably an error, fix when error handling is added.
+			panic("current statement is nil")
+		}
+		statements = append(statements, curStatement)
+		p.advance()
+	}
+	blockStatement.Statements = statements
+	return blockStatement
+}
+
 func (p *Parser) advanceExpect(expected lexer.TokenType) {
 	if p.CurrentToken.Type != expected {
 		panic(fmt.Sprintf("Expected %s got %s", expected, p.CurrentToken.Literal))
@@ -219,4 +248,11 @@ func (p *Parser) expectNext(expected lexer.TokenType) {
 		panic(fmt.Sprintf("Expected %s got %s", expected, p.CurrentToken.Literal))
 	}
 	p.advance()
+}
+
+func (p *Parser) ParseBoolean() Expression {
+	return &BooleanLiteral{
+		ActualValue: p.CurrentToken.Type == lexer.True,
+		Token:       p.CurrentToken,
+	}
 }

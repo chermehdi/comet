@@ -53,6 +53,9 @@ func TestLexer_Next(t *testing.T) {
 			NewToken(Identifier, "_a"),
 			NewToken(Identifier, "_a1b"),
 		}},
+		{`"hello world!"`, []Token{
+			NewToken(String, "hello world!"),
+		}},
 		{`12 2`, []Token{
 			NewToken(Number, "12"),
 			NewToken(Number, "2"),

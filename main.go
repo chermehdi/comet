@@ -13,6 +13,16 @@ type PrintingVisitor struct {
 	buffer bytes.Buffer
 }
 
+func (p *PrintingVisitor) VisitBlockStatement(statement parser.BlockStatement) {
+	p.printIndent()
+	p.buffer.WriteString("BlockStatement{}\n")
+	p.indent += IndentWidth
+	for _, statement := range statement.Statements {
+		statement.Accept(p)
+	}
+	p.indent -= IndentWidth
+}
+
 func (p *PrintingVisitor) printIndent() {
 	for i := 0; i < p.indent; i++ {
 		p.buffer.WriteRune(' ')
@@ -93,8 +103,22 @@ func (p *PrintingVisitor) VisitReturnStatement(statement parser.ReturnStatement)
 	p.indent -= IndentWidth
 }
 
+func (p *PrintingVisitor) VisitBooleanLiteral(literal parser.BooleanLiteral) {
+	p.printIndent()
+	p.buffer.WriteString(fmt.Sprintf("BooleanLiteral (%v)\n", literal.ActualValue))
+}
+
 func main() {
-	src := `return (1 + 2 * a)`
+	src := `{
+	{
+		var a = 1 + 2
+	}
+	{
+		var b = 1 + 2
+	}
+	return a
+}
+`
 	rootNode := parser.New(src).Parse()
 	visitor := &PrintingVisitor{}
 	rootNode.Accept(visitor)

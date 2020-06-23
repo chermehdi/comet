@@ -13,14 +13,18 @@ import "github.com/chermehdi/comet/lexer"
 type NodeVisitor interface {
 	VisitExpression(Expression)
 	VisitStatement(Statement)
+
 	VisitRootNode(RootNode)
 	VisitBinaryExpression(BinaryExpression)
 	VisitPrefixExpression(PrefixExpression)
 	VisitNumberLiteral(NumberLiteralExpression)
+	VisitBooleanLiteral(BooleanLiteral)
 	VisitParenthesisedExpression(ParenthesisedExpression)
-	VisitDeclarationStatement(DeclarationStatement)
 	VisitIdentifierExpression(IdentifierExpression)
+
+	VisitDeclarationStatement(DeclarationStatement)
 	VisitReturnStatement(statement ReturnStatement)
+	VisitBlockStatement(statement BlockStatement)
 }
 
 type Node interface {
@@ -194,5 +198,42 @@ func (d *ReturnStatement) Accept(visitor NodeVisitor) {
 }
 
 func (d *ReturnStatement) Statement() {
+	panic("implement me")
+}
+
+type BooleanLiteral struct {
+	ActualValue bool
+	Token       lexer.Token
+}
+
+func (b *BooleanLiteral) Literal() string {
+	return b.Token.Literal
+}
+
+func (b *BooleanLiteral) Accept(visitor NodeVisitor) {
+	visitor.VisitBooleanLiteral(*b)
+}
+
+func (b *BooleanLiteral) Statement() {
+	panic("implement me")
+}
+
+func (b *BooleanLiteral) Expr() {
+	panic("implement me")
+}
+
+type BlockStatement struct {
+	Statements []Statement
+}
+
+func (b *BlockStatement) Literal() string {
+	return "BlockStatement"
+}
+
+func (b *BlockStatement) Accept(visitor NodeVisitor) {
+	visitor.VisitBlockStatement(*b)
+}
+
+func (b *BlockStatement) Statement() {
 	panic("implement me")
 }
