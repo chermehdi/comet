@@ -166,8 +166,7 @@ func (l *Lexer) readString() Token {
 			panic(fmt.Sprint("Reached the end of line or end of input without closing the string quote"))
 		}
 	}
-	l.advance()
-	return NewToken(String, l.src[start:l.pos-1])
+	return NewToken(String, l.src[start:l.pos])
 }
 
 func isWhiteSpace(c byte) bool {

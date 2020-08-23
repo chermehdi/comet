@@ -1,6 +1,8 @@
 package parser
 
-import "github.com/chermehdi/comet/lexer"
+import (
+	"github.com/chermehdi/comet/lexer"
+)
 
 // API provided for all nodes types.
 // Implementing a visitor will allow you to traverse the AST and perform some operation (printing, testing, code generation...)
@@ -19,13 +21,16 @@ type NodeVisitor interface {
 	VisitPrefixExpression(PrefixExpression)
 	VisitNumberLiteral(NumberLiteralExpression)
 	VisitBooleanLiteral(BooleanLiteral)
+	VisitStringLiteral(StringLiteral)
 	VisitParenthesisedExpression(ParenthesisedExpression)
 	VisitIdentifierExpression(IdentifierExpression)
+	VisitCallExpression(CallExpression)
 
 	VisitDeclarationStatement(DeclarationStatement)
 	VisitReturnStatement(ReturnStatement)
 	VisitBlockStatement(BlockStatement)
 	VisitIfStatement(IfStatement)
+	VisitFunctionStatement(FunctionStatement)
 }
 
 type Node interface {
@@ -268,4 +273,70 @@ func newIfStatement() *IfStatement {
 		Then: *EmptyBlock,
 		Else: *EmptyBlock,
 	}
+}
+
+type FunctionStatement struct {
+	Name       string
+	Parameters []*IdentifierExpression
+	Block      *BlockStatement
+}
+
+func (f *FunctionStatement) Literal() string {
+	panic("Implement me!")
+}
+
+func (f *FunctionStatement) Accept(visitor NodeVisitor) {
+	visitor.VisitFunctionStatement(*f)
+}
+
+func (f *FunctionStatement) Statement() {
+	panic("implement me")
+}
+
+func newFunctionStatement() *FunctionStatement {
+	return &FunctionStatement{
+		Parameters: make([]*IdentifierExpression, 0),
+		Block:      EmptyBlock,
+	}
+}
+
+type CallExpression struct {
+	Name      string
+	Arguments []Expression
+}
+
+func (c *CallExpression) Literal() string {
+	panic("implement me")
+}
+
+func (c *CallExpression) Accept(visitor NodeVisitor) {
+	visitor.VisitCallExpression(*c)
+}
+
+func (c *CallExpression) Statement() {
+	panic("implement me")
+}
+
+func (c *CallExpression) Expr() {
+	panic("implement me")
+}
+
+type StringLiteral struct {
+	Value string
+}
+
+func (s *StringLiteral) Literal() string {
+	return s.Value
+}
+
+func (s *StringLiteral) Accept(visitor NodeVisitor) {
+	visitor.VisitStringLiteral(*s)
+}
+
+func (s *StringLiteral) Statement() {
+	panic("implement me")
+}
+
+func (s *StringLiteral) Expr() {
+	panic("implement me")
 }

@@ -13,6 +13,11 @@ type PrintingVisitor struct {
 	buffer bytes.Buffer
 }
 
+func (p *PrintingVisitor) VisitStringLiteral(literal parser.StringLiteral) {
+	p.printIndent()
+	p.buffer.WriteString(fmt.Sprintf("StringLiteral(%s)\n", literal.Value))
+}
+
 func (p *PrintingVisitor) VisitIfStatement(statement parser.IfStatement) {
 	p.printIndent()
 	p.buffer.WriteString("IfStatement\n")
@@ -120,12 +125,35 @@ func (p *PrintingVisitor) VisitBooleanLiteral(literal parser.BooleanLiteral) {
 	p.buffer.WriteString(fmt.Sprintf("BooleanLiteral (%v)\n", literal.ActualValue))
 }
 
+func (p *PrintingVisitor) VisitFunctionStatement(statement parser.FunctionStatement) {
+	p.printIndent()
+	p.buffer.WriteString(fmt.Sprintf("FuncStatement %s\n", statement.Name))
+	p.indent += IndentWidth
+	p.printIndent()
+	p.buffer.WriteString("Parameters: \n")
+	for _, param := range statement.Parameters {
+		param.Accept(p)
+	}
+	statement.Block.Accept(p)
+	p.indent -= IndentWidth
+}
+
+func (p *PrintingVisitor) VisitCallExpression(expression parser.CallExpression) {
+	p.printIndent()
+	p.buffer.WriteString(fmt.Sprintf("CallExpression %s\n", expression.Name))
+	p.indent += IndentWidth
+	p.printIndent()
+	p.buffer.WriteString("Parameters: \n")
+	for _, arg := range expression.Arguments {
+		arg.Accept(p)
+	}
+	p.indent -= IndentWidth
+}
+
 func main() {
 	src := `
-	if a == 1 {
-} else {
-	var a = 12
-}
+	var a = hello(10, 2)
+	var c = goodBay("call", something(), a) 
 `
 	rootNode := parser.New(src).Parse()
 	visitor := &PrintingVisitor{}

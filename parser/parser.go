@@ -76,6 +76,7 @@ func (p *Parser) init() {
 	p.registerPrefixFunc(p.parseIdentifier, lexer.Identifier)
 	p.registerPrefixFunc(p.parseBoolean, lexer.True, lexer.False)
 	p.registerPrefixFunc(p.parseParenthesisedExpression, lexer.OpenParent)
+	p.registerPrefixFunc(p.parseStringLiteral, lexer.String)
 
 	p.registerBinaryFunc(p.parseBinaryExpression, lexer.Plus, lexer.Mul, lexer.Minus, lexer.Div,
 		lexer.GT, lexer.GTE, lexer.LT, lexer.LTE, lexer.EQ, lexer.NEQ)
@@ -129,6 +130,8 @@ func (p *Parser) parseStatement() Statement {
 		return p.parseBlockStatement()
 	case lexer.If:
 		return p.parseIfStatement()
+	case lexer.Func:
+		return p.parseFunctionStatement()
 	default:
 		return p.parseExpression()
 	}
@@ -173,8 +176,39 @@ func (p *Parser) parseNumberLiteral() Expression {
 
 // an identifier is an expression that represents the name of a variable.
 func (p *Parser) parseIdentifier() Expression {
-	identifier := &IdentifierExpression{Name: p.CurrentToken.Literal}
-	return identifier
+	if p.NextToken.Type == lexer.OpenParent {
+		// This is a function call
+		callExpression := &CallExpression{
+			Name: p.CurrentToken.Literal,
+		}
+		p.advance()
+		callExpression.Arguments = p.parseCallArguments()
+		return callExpression
+	} else {
+		// This is an identifier
+		return &IdentifierExpression{Name: p.CurrentToken.Literal}
+	}
+}
+
+func (p *Parser) parseCallArguments() []Expression {
+	args := []Expression{}
+	if p.NextToken.Type == lexer.CloseParent {
+		p.advance()
+		return args
+	}
+	p.advance()
+	// parse first argument
+	args = append(args, p.parseExpression())
+	for p.NextToken.Type == lexer.Comma {
+		p.advance() // Skip last token of current expression
+		p.advance() // Skip the comma
+		args = append(args, p.parseExpression())
+	}
+	p.advance()
+	if p.CurrentToken.Type != lexer.CloseParent {
+		panic(fmt.Sprintf("Expected %s, got %s", lexer.CloseParent, p.CurrentToken.Literal))
+	}
+	return args
 }
 
 // any expression of the form ( expression )
@@ -262,6 +296,35 @@ func (p *Parser) parseIfStatement() Statement {
 	return ifStatement
 }
 
+func (p *Parser) parseFunctionStatement() Statement {
+	funcStatement := newFunctionStatement()
+	p.advanceExpect(lexer.Func)
+
+	funcStatement.Name = p.CurrentToken.Literal
+	p.advanceExpect(lexer.Identifier)
+
+	p.advanceExpect(lexer.OpenParent)
+	// if there are parameters
+	if p.CurrentToken.Type != lexer.CloseParent {
+		for {
+			if p.CurrentToken.Type == lexer.EOF || p.CurrentToken.Type == lexer.CloseParent {
+				break
+			}
+			parameterName := p.parseIdentifier()
+			parameterExpression, _ := parameterName.(*IdentifierExpression)
+			funcStatement.Parameters = append(funcStatement.Parameters, parameterExpression)
+			p.advance()
+			if p.CurrentToken.Type == lexer.Comma {
+				p.advance()
+			}
+		}
+	}
+	p.advanceExpect(lexer.CloseParent)
+
+	funcStatement.Block = p.parseBlockStatement()
+	return funcStatement
+}
+
 func (p *Parser) advanceExpect(expected lexer.TokenType) {
 	if p.CurrentToken.Type != expected {
 		panic(fmt.Sprintf("Expected %s got %s", expected, p.CurrentToken.Literal))
@@ -274,4 +337,8 @@ func (p *Parser) expectNext(expected lexer.TokenType) {
 		panic(fmt.Sprintf("Expected %s got %s", expected, p.CurrentToken.Literal))
 	}
 	p.advance()
+}
+
+func (p *Parser) parseStringLiteral() Expression {
+	return &StringLiteral{Value: p.CurrentToken.Literal}
 }

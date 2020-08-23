@@ -64,6 +64,11 @@ func TestLexer_Next(t *testing.T) {
 			NewToken(String, "some kind of text for strings "),
 			NewToken(Identifier, "a1"),
 		}},
+		{`"hello", a`, []Token{
+			NewToken(String, "hello"),
+			NewToken(Comma, ","),
+			NewToken(Identifier, "a"),
+		}},
 		{`func new return if else a for var true false`, []Token{
 			NewToken(Func, "func"),
 			NewToken(New, "new"),

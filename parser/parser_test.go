@@ -15,6 +15,14 @@ type TestingVisitor struct {
 	t        *testing.T
 }
 
+func (t *TestingVisitor) VisitStringLiteral(literal StringLiteral) {
+	currentNode := t.expected[t.ptr]
+	currentStringLiteral, ok := currentNode.(*StringLiteral)
+	assert.True(t.t, ok)
+	assert.Equal(t.t, currentStringLiteral.Value, literal.Value)
+	t.ptr++
+}
+
 func (t *TestingVisitor) VisitExpression(Expression) {
 }
 
@@ -108,6 +116,29 @@ func (t *TestingVisitor) VisitIfStatement(statement IfStatement) {
 	statement.Test.Accept(t)
 	statement.Then.Accept(t)
 	statement.Else.Accept(t)
+}
+
+func (t *TestingVisitor) VisitFunctionStatement(statement FunctionStatement) {
+	currentNode := t.expected[t.ptr]
+	expectedFuncStatement, ok := currentNode.(*FunctionStatement)
+	assert.True(t.t, ok)
+	assert.Equal(t.t, expectedFuncStatement.Name, statement.Name)
+	t.ptr++
+	for _, parameter := range statement.Parameters {
+		parameter.Accept(t)
+	}
+	statement.Block.Accept(t)
+}
+
+func (t *TestingVisitor) VisitCallExpression(expression CallExpression) {
+	currentNode := t.expected[t.ptr]
+	expectedCallExpression, ok := currentNode.(*CallExpression)
+	assert.True(t.t, ok)
+	assert.Equal(t.t, expectedCallExpression.Name, expression.Name)
+	t.ptr++
+	for _, arg := range expression.Arguments {
+		arg.Accept(t)
+	}
 }
 
 func (t *TestingVisitor) VisitBooleanLiteral(literal BooleanLiteral) {
@@ -604,6 +635,134 @@ func TestParser_ParseIfStatement(t *testing.T) {
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
 				&NumberLiteralExpression{ActualValue: int64(2)},
 				&BlockStatement{}, // accounting for the then empty block.
+			},
+		},
+	}
+
+	for _, test := range tests {
+		parser := New(test.Expr)
+		rootNode := parser.Parse()
+		assert.NotNil(t, rootNode)
+		testingVisitor := &TestingVisitor{
+			expected: test.Expected,
+			ptr:      0,
+			t:        t,
+		}
+		rootNode.Accept(testingVisitor)
+	}
+}
+
+func TestParser_Parse_ParseFunctionDeclaration(t *testing.T) {
+	tests := []struct {
+		Expr     string
+		Expected []Node
+	}{
+		{
+			Expr: `
+			func foo() {}
+		`,
+			Expected: []Node{
+				&FunctionStatement{Name: "foo"},
+				&BlockStatement{},
+			},
+		},
+		{
+			Expr: `
+			func foo(a) {}
+		`,
+			Expected: []Node{
+				&FunctionStatement{Name: "foo"},
+				&IdentifierExpression{Name: "a"},
+				&BlockStatement{},
+			},
+		},
+		{
+			Expr: `
+			func foo(a) {}
+
+			func bar() {}
+		`,
+			Expected: []Node{
+				&FunctionStatement{Name: "foo"},
+				&IdentifierExpression{Name: "a"},
+				&BlockStatement{},
+				&FunctionStatement{Name: "bar"},
+				&BlockStatement{},
+			},
+		},
+		{
+			Expr: `
+			func foo(a, b) {
+				return 10
+			}
+		`,
+			Expected: []Node{
+				&FunctionStatement{Name: "foo"},
+				&IdentifierExpression{Name: "a"},
+				&IdentifierExpression{Name: "b"},
+				&BlockStatement{},
+				&ReturnStatement{},
+				&NumberLiteralExpression{10},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		parser := New(test.Expr)
+		rootNode := parser.Parse()
+		assert.NotNil(t, rootNode)
+		testingVisitor := &TestingVisitor{
+			expected: test.Expected,
+			ptr:      0,
+			t:        t,
+		}
+		rootNode.Accept(testingVisitor)
+	}
+}
+
+func TestParser_Parse_ParseFunctionCall(t *testing.T) {
+	tests := []struct {
+		Expr     string
+		Expected []Node
+	}{
+		{
+			Expr: `
+			foo()
+		`,
+			Expected: []Node{
+				&CallExpression{Name: "foo"},
+				&BlockStatement{},
+			},
+		},
+		{
+			Expr: `
+			foo(1 + 42, java, true)
+		`,
+			Expected: []Node{
+				&CallExpression{Name: "foo"},
+				&NumberLiteralExpression{1},
+				&BinaryExpression{Op: lexer.Token{Literal: lexer.Plus}},
+				&NumberLiteralExpression{42},
+				&IdentifierExpression{"java"},
+				&BooleanLiteral{
+					ActualValue: true,
+				},
+			},
+		},
+		{
+			Expr: `
+			var result = foo(1 + 42, java, true)
+		`,
+			Expected: []Node{
+				&DeclarationStatement{Identifier: lexer.Token{Literal: "result"}},
+				&CallExpression{Name: "foo"},
+				&NumberLiteralExpression{1},
+				&BinaryExpression{Op: lexer.Token{Literal: lexer.Plus}},
+				&NumberLiteralExpression{42},
+				&IdentifierExpression{"java"},
+				&BooleanLiteral{
+					ActualValue: true,
+				},
 			},
 		},
 	}
