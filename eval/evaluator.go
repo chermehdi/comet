@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"github.com/chermehdi/comet/lexer"
 	"github.com/chermehdi/comet/parser"
 )
 
@@ -32,6 +33,8 @@ func (ev *Evaluator) Eval(node parser.Node) CometObject {
 		} else {
 			return FalseObject
 		}
+	case *parser.BinaryExpression:
+		return ev.evalBinaryExpression(n)
 	}
 	return nil
 }
@@ -64,6 +67,84 @@ func (ev *Evaluator) evalPrefixExpression(n *parser.PrefixExpression) CometObjec
 		} else {
 			return TrueObject
 		}
+	default:
+		return createError("Unrecognized prefix operator %s", n.Op.Literal)
 	}
-	return nil
+}
+
+func (ev *Evaluator) evalBinaryExpression(n *parser.BinaryExpression) CometObject {
+	left := ev.Eval(n.Left)
+	right := ev.Eval(n.Right)
+	if left.Type() == IntType && right.Type() == IntType {
+		return applyOp(n.Op.Type, left, right)
+	}
+	if left.Type() == BoolType && right.Type() == BoolType {
+		return applyBoolOp(n.Op.Type, left, right)
+	}
+	if left.Type() != right.Type() {
+		// operators == and != are applicable here, Objects with different types are always not equal in comet.
+		switch n.Op.Type {
+		case lexer.EQ:
+			return FalseObject
+		case lexer.NEQ:
+			return TrueObject
+		}
+	}
+	return createError("Cannot apply operator %s on given types %v and %v", n.Op.Literal, left.Type(), right.Type())
+}
+
+func applyOp(op lexer.TokenType, left CometObject, right CometObject) CometObject {
+	leftInt := left.(*CometInt)
+	rightInt := right.(*CometInt)
+	switch op {
+	case lexer.Plus:
+		return &CometInt{leftInt.Value + rightInt.Value}
+	case lexer.Minus:
+		return &CometInt{leftInt.Value - rightInt.Value}
+	case lexer.Mul:
+		return &CometInt{leftInt.Value * rightInt.Value}
+	case lexer.Div:
+		return &CometInt{leftInt.Value / rightInt.Value}
+	case lexer.EQ:
+		return boolValue(leftInt.Value == rightInt.Value)
+	case lexer.NEQ:
+		return boolValue(leftInt.Value != rightInt.Value)
+	case lexer.LTE:
+		return boolValue(leftInt.Value <= rightInt.Value)
+	case lexer.LT:
+		return boolValue(leftInt.Value < rightInt.Value)
+	case lexer.GTE:
+		return boolValue(leftInt.Value >= rightInt.Value)
+	case lexer.GT:
+		return boolValue(leftInt.Value > rightInt.Value)
+	default:
+		return createError("Cannot recognize binary operator %s", op)
+	}
+}
+
+func createError(s string, params ...interface{}) CometObject {
+	message := fmt.Sprintf(s, params...)
+	return &CometError{
+		message,
+	}
+}
+
+func applyBoolOp(op lexer.TokenType, left CometObject, right CometObject) CometObject {
+	leftInt := left.(*CometBool)
+	rightInt := right.(*CometBool)
+	switch op {
+	case "==":
+		return boolValue(leftInt.Value == rightInt.Value)
+	case "!=":
+		return boolValue(leftInt.Value != rightInt.Value)
+	default:
+		return createError("None-applicable operator %s for booleans", op)
+	}
+}
+
+func boolValue(condition bool) *CometBool {
+	if condition {
+		return TrueObject
+	}
+	return FalseObject
 }

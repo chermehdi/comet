@@ -25,6 +25,30 @@ func TestEvaluator_Eval_Integers(t *testing.T) {
 			fmt.Sprintf("%d", math.MaxInt64),
 			math.MaxInt64,
 		},
+		{
+			"1 + 1",
+			2,
+		},
+		{
+			"1 - 1",
+			0,
+		},
+		{
+			"2 * 15",
+			30,
+		},
+		{
+			"15 / 3",
+			5,
+		},
+		{
+			"1 + 2 * 3",
+			7,
+		},
+		{
+			"1 * -2",
+			-2,
+		},
 	}
 
 	evaluator := New()
@@ -54,6 +78,30 @@ func TestEvaluator_Eval_Booleans(t *testing.T) {
 		},
 		{
 			"!!true",
+			true,
+		},
+		{
+			"true == true",
+			true,
+		},
+		{
+			"true != false",
+			true,
+		},
+		{
+			"true == false",
+			false,
+		},
+		{
+			"true != false",
+			true,
+		},
+		{
+			"1 == true",
+			false,
+		},
+		{
+			"1 != true",
 			true,
 		},
 	}

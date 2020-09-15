@@ -6,8 +6,9 @@ import "fmt"
 type CometType string
 
 const (
-	IntType  = "INTEGER"
-	BoolType = "BOOLEAN"
+	IntType   = "INTEGER"
+	BoolType  = "BOOLEAN"
+	ErrorType = "Error"
 )
 
 // Every object (or primitive) in the comet programming language will be representated
@@ -42,4 +43,16 @@ func (b *CometBool) Type() CometType {
 
 func (b *CometBool) ToString() string {
 	return fmt.Sprintf("CometBool(%v)", b.Value)
+}
+
+type CometError struct {
+	Message string
+}
+
+func (c *CometError) Type() CometType {
+	return ErrorType
+}
+
+func (c *CometError) ToString() string {
+	return fmt.Sprintf("Comet error: \n\n\t%s", c.Message)
 }
