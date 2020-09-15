@@ -152,6 +152,7 @@ func (p *PrintingVisitor) VisitCallExpression(expression parser.CallExpression) 
 
 func main() {
 	src := `
+	-5
 	var a = hello(10, 2)
 	var c = goodBay("call", something(), a) 
 `
