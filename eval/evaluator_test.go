@@ -67,13 +67,13 @@ func TestEvaluator_Eval_Booleans(t *testing.T) {
 }
 
 func assertBoolean(t *testing.T, v CometObject, expected bool) {
-	boolean, ok := v.(*Boolean)
+	boolean, ok := v.(*CometBool)
 	assert.True(t, ok)
 	assert.Equal(t, expected, boolean.Value)
 }
 
 func assertInteger(t *testing.T, v CometObject, expected int64) {
-	integer, ok := v.(*Integer)
+	integer, ok := v.(*CometInt)
 	assert.True(t, ok)
 	assert.Equal(t, expected, integer.Value)
 }

@@ -5,6 +5,11 @@ import (
 	"github.com/chermehdi/comet/parser"
 )
 
+var (
+	TrueObject  = &CometBool{true}
+	FalseObject = &CometBool{false}
+)
+
 type Evaluator struct {
 	parser parser.Parser
 }
@@ -20,9 +25,13 @@ func (ev *Evaluator) Eval(node parser.Node) CometObject {
 	case *parser.PrefixExpression:
 		return ev.evalPrefixExpression(n)
 	case *parser.NumberLiteralExpression:
-		return &Integer{n.ActualValue}
+		return &CometInt{n.ActualValue}
 	case *parser.BooleanLiteral:
-		return &Boolean{n.ActualValue}
+		if n.ActualValue {
+			return TrueObject
+		} else {
+			return FalseObject
+		}
 	}
 	return nil
 }
@@ -39,19 +48,22 @@ func (ev *Evaluator) evalPrefixExpression(n *parser.PrefixExpression) CometObjec
 	res := ev.Eval(n.Right)
 	switch n.Op.Literal {
 	case "-":
-		if res.Type() != IntegerType {
+		if res.Type() != IntType {
 			panic(fmt.Sprintf("Cannot apply operator (-) on none integer type %s", res.ToString()))
 		}
-		result := res.(*Integer)
+		result := res.(*CometInt)
 		result.Value *= -1
 		return result
 	case "!":
-		if res.Type() != BooleanType {
+		if res.Type() != BoolType {
 			panic(fmt.Sprintf("Cannot apply operator (!) on none boolean type %s", res.ToString()))
 		}
-		result := res.(*Boolean)
-		result.Value = !result.Value
-		return result
+		result := res.(*CometBool)
+		if result.Value {
+			return FalseObject
+		} else {
+			return TrueObject
+		}
 	}
 	return nil
 }

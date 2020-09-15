@@ -6,8 +6,8 @@ import "fmt"
 type CometType string
 
 const (
-	IntegerType = "INTEGER"
-	BooleanType = "BOOLEAN"
+	IntType  = "INTEGER"
+	BoolType = "BOOLEAN"
 )
 
 // Every object (or primitive) in the comet programming language will be representated
@@ -20,27 +20,26 @@ type CometObject interface {
 	ToString() string
 }
 
-type Integer struct {
+type CometInt struct {
 	Value int64
 }
 
-func (i *Integer) Type() CometType {
-	return IntegerType
+func (i *CometInt) Type() CometType {
+	return IntType
 }
 
-func (i *Integer) ToString() string {
-	return fmt.Sprintf("Integer(%d)", i.Value)
+func (i *CometInt) ToString() string {
+	return fmt.Sprintf("CometInt(%d)", i.Value)
 }
 
-type Boolean struct {
+type CometBool struct {
 	Value bool
 }
 
-func (b *Boolean) Type() CometType {
-	return BooleanType
+func (b *CometBool) Type() CometType {
+	return BoolType
 }
 
-func (b *Boolean) ToString() string {
-	return fmt.Sprintf("Boolean(%v)", b.Value)
+func (b *CometBool) ToString() string {
+	return fmt.Sprintf("CometBool(%v)", b.Value)
 }
-
