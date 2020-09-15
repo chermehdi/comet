@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/chermehdi/comet/parser"
+	"github.com/chermehdi/comet/repl"
+	"os"
 )
 
 const IndentWidth = 2
@@ -151,13 +153,6 @@ func (p *PrintingVisitor) VisitCallExpression(expression parser.CallExpression) 
 }
 
 func main() {
-	src := `
-	-5
-	var a = hello(10, 2)
-	var c = goodBay("call", something(), a) 
-`
-	rootNode := parser.New(src).Parse()
-	visitor := &PrintingVisitor{}
-	rootNode.Accept(visitor)
-	fmt.Println(visitor)
+	repler := repl.Repl{}
+	repler.Start(os.Stdin, os.Stdout)
 }
