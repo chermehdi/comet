@@ -6,6 +6,7 @@ import (
 	"github.com/chermehdi/comet/eval"
 	"github.com/chermehdi/comet/parser"
 	"io"
+	"strings"
 )
 
 type Repl struct{}
@@ -15,13 +16,15 @@ func (r *Repl) Start(reader io.Reader, writer io.Writer) {
 	evaluator := eval.Evaluator{}
 
 	for {
-		fmt.Fprint(writer, ">>")
+		fmt.Fprint(writer, ">> ")
 		if !scanner.Scan() {
-			fmt.Fprint(writer, "Good by !")
+			fmt.Fprintln(writer, "Good by !")
 			break
 		}
-
 		line := scanner.Text()
+		if strings.Trim(line, " \n\t\r") == "" {
+			continue
+		}
 		parser := parser.New(line)
 		rootNode := parser.Parse()
 
