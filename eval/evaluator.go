@@ -9,6 +9,7 @@ import (
 var (
 	TrueObject  = &CometBool{true}
 	FalseObject = &CometBool{false}
+	NopInstance = &NopObject{}
 )
 
 type Evaluator struct {
@@ -35,8 +36,10 @@ func (ev *Evaluator) Eval(node parser.Node) CometObject {
 		}
 	case *parser.BinaryExpression:
 		return ev.evalBinaryExpression(n)
+	case *parser.ParenthesisedExpression:
+		return ev.Eval(n.Expression)
 	}
-	return nil
+	return NopInstance
 }
 
 func (ev *Evaluator) evalStatements(statements []parser.Statement) CometObject {
@@ -49,15 +52,15 @@ func (ev *Evaluator) evalStatements(statements []parser.Statement) CometObject {
 
 func (ev *Evaluator) evalPrefixExpression(n *parser.PrefixExpression) CometObject {
 	res := ev.Eval(n.Right)
-	switch n.Op.Literal {
-	case "-":
+	switch n.Op.Type {
+	case lexer.Minus:
 		if res.Type() != IntType {
 			panic(fmt.Sprintf("Cannot apply operator (-) on none integer type %s", res.ToString()))
 		}
 		result := res.(*CometInt)
 		result.Value *= -1
 		return result
-	case "!":
+	case lexer.Bang:
 		if res.Type() != BoolType {
 			panic(fmt.Sprintf("Cannot apply operator (!) on none boolean type %s", res.ToString()))
 		}

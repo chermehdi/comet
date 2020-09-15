@@ -49,6 +49,10 @@ func TestEvaluator_Eval_Integers(t *testing.T) {
 			"1 * -2",
 			-2,
 		},
+		{
+			"(1)",
+			1,
+		},
 	}
 
 	evaluator := New()

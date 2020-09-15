@@ -9,6 +9,7 @@ const (
 	IntType   = "INTEGER"
 	BoolType  = "BOOLEAN"
 	ErrorType = "Error"
+	Nop       = "NOP"
 )
 
 // Every object (or primitive) in the comet programming language will be representated
@@ -55,4 +56,14 @@ func (c *CometError) Type() CometType {
 
 func (c *CometError) ToString() string {
 	return fmt.Sprintf("Comet error: \n\n\t%s", c.Message)
+}
+
+type NopObject struct{}
+
+func (n *NopObject) Type() CometType {
+	return Nop
+}
+
+func (n *NopObject) ToString() string {
+	return "CometNop"
 }
