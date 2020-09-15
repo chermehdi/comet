@@ -73,6 +73,7 @@ func (p *Parser) init() {
 	p.binaryFuncs = make(map[lexer.TokenType]binaryParseFunction)
 
 	p.registerPrefixFunc(p.parseNumberLiteral, lexer.Number)
+	p.registerPrefixFunc(p.parsePrefixExpression, lexer.Minus, lexer.Bang)
 	p.registerPrefixFunc(p.parseIdentifier, lexer.Identifier)
 	p.registerPrefixFunc(p.parseBoolean, lexer.True, lexer.False)
 	p.registerPrefixFunc(p.parseParenthesisedExpression, lexer.OpenParent)
@@ -163,6 +164,15 @@ func (p *Parser) parseReturnStatement() Statement {
 // This will initiate try parsing an expression with the Minimum precedence.
 func (p *Parser) parseExpression() Expression {
 	return p.parseInternal(MINIMUM)
+}
+
+func (p *Parser) parsePrefixExpression() Expression {
+	expression := &PrefixExpression{
+		Op: p.CurrentToken,
+	}
+	p.advance()
+	expression.Right = p.parseExpression()
+	return expression
 }
 
 // A Number Literal is an expression that represents a number.

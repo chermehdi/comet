@@ -42,7 +42,12 @@ func (t *TestingVisitor) VisitBinaryExpression(expression BinaryExpression) {
 }
 
 func (t *TestingVisitor) VisitPrefixExpression(expression PrefixExpression) {
-	panic("implement me")
+	currentNode := t.expected[t.ptr]
+	prefExpected, ok := currentNode.(*PrefixExpression)
+	assert.True(t.t, ok)
+	assert.Equal(t.t, prefExpected.Op.Literal, expression.Op.Literal)
+	t.ptr++
+	expression.Right.Accept(t)
 }
 
 func (t *TestingVisitor) VisitNumberLiteral(expression NumberLiteralExpression) {
@@ -390,88 +395,110 @@ func TestParser_ParseBooleans(t *testing.T) {
 	}
 }
 
-func TestParser_ParseComparisonOperators(t *testing.T) {
+func TestParser_ParsePrefixExpression(t *testing.T) {
 	tests := []struct {
 		Expr     string
 		Expected []Node
 	}{
 		{
-			Expr: "1 < 2",
+			Expr: "-1",
 			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "<"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&PrefixExpression{Op: lexer.Token{Literal: "-"}},
+				&NumberLiteralExpression{ActualValue: 1},
 			},
 		},
 		{
-			Expr: "1 <= 2",
+			Expr: "!true",
 			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "<="}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&PrefixExpression{Op: lexer.Token{Literal: "!"}},
+				&BooleanLiteral{ActualValue: true},
 			},
 		},
+	}
+
+	for _, test := range tests {
+		parser := New(test.Expr)
+		rootNode := parser.Parse()
+		assert.NotNil(t, rootNode)
+		testingVisitor := &TestingVisitor{
+			expected: test.Expected,
+			ptr:      0,
+			t:        t,
+		}
+		rootNode.Accept(testingVisitor)
+	}
+}
+
+func TestParser_ParsePrefixOperators(t *testing.T) {
+
+	tests := []struct {
+		Expr     string
+		Expected []Node
+	}{
 		{
-			Expr: "1 > 2",
+			Expr: `{
+	var a = 1 + 2
+	return a
+}`,
 			Expected: []Node{
+				&BlockStatement{},
+				&DeclarationStatement{
+					Identifier: lexer.Token{Literal: "a"},
+				},
 				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: ">"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
-			},
-		},
-		{
-			Expr: "1 >= 2",
-			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: ">="}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
-			},
-		},
-		{
-			Expr: "1 == 2",
-			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "=="}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
-			},
-		},
-		{
-			Expr: "1 != 2",
-			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "!="}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
-			},
-		},
-		{
-			Expr: "1 > 2 + 1",
-			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: ">"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteralExpression{ActualValue: int64(2)},
+				&ReturnStatement{},
+				&IdentifierExpression{Name: "a"},
 			},
 		},
 		{
-			Expr: "1 < 2 + 1",
+			Expr: `{}`,
 			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "<"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&BlockStatement{},
 			},
 		},
 		{
-			Expr: "(1 < 2) + 1",
+			Expr: `{}
+			var a = 1 + 2`,
 			Expected: []Node{
-				&ParenthesisedExpression{},
+				&BlockStatement{},
+				&DeclarationStatement{
+					Identifier: lexer.Token{Literal: "a"},
+				},
 				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "<"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&NumberLiteralExpression{ActualValue: int64(2)},
+			},
+		},
+		{
+			Expr: `{
+				{
+					var a = 1 + 2
+				}
+				{
+					var b = 1 + 2
+				}
+				return a
+			}`,
+			Expected: []Node{
+				&BlockStatement{},
+				&BlockStatement{},
+				&DeclarationStatement{
+					Identifier: lexer.Token{Literal: "a"},
+				},
 				&NumberLiteralExpression{ActualValue: int64(1)},
+				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&NumberLiteralExpression{ActualValue: int64(2)},
+				&BlockStatement{},
+				&DeclarationStatement{
+					Identifier: lexer.Token{Literal: "b"},
+				},
+				&NumberLiteralExpression{ActualValue: int64(1)},
+				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&NumberLiteralExpression{ActualValue: int64(2)},
+				&ReturnStatement{},
+				&IdentifierExpression{Name: "a"},
 			},
 		},
 	}
