@@ -13,7 +13,7 @@ type Repl struct{}
 
 func (r *Repl) Start(reader io.Reader, writer io.Writer) {
 	scanner := bufio.NewScanner(reader)
-	evaluator := eval.Evaluator{}
+	evaluator := eval.New()
 
 	for {
 		fmt.Fprint(writer, ">> ")
@@ -25,8 +25,8 @@ func (r *Repl) Start(reader io.Reader, writer io.Writer) {
 		if strings.Trim(line, " \n\t\r") == "" {
 			continue
 		}
-		parser := parser.New(line)
-		rootNode := parser.Parse()
+		p := parser.New(line)
+		rootNode := p.Parse()
 
 		res := evaluator.Eval(rootNode)
 		if res != nil {

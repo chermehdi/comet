@@ -13,11 +13,53 @@ var (
 )
 
 type Evaluator struct {
-	parser parser.Parser
+	scope *Scope
 }
 
 func New() *Evaluator {
-	return &Evaluator{}
+	return &Evaluator{
+		NewScope(nil),
+	}
+}
+
+type Scope struct {
+	// The variables bound to this scope instance
+	Variables map[string]CometObject
+
+	// The parent scope if we are inside a function
+	// if this is nil, this is the global scope instance.
+	Parent *Scope
+}
+
+// Creates a new Scope with the given parent.
+func NewScope(parent *Scope) *Scope {
+	store := make(map[string]CometObject)
+	return &Scope{
+		Variables: store,
+		Parent:    parent,
+	}
+}
+
+// Looks up the object bound to the varName
+// The lookup should explore the parent(s) scope as well ans should return a tuple (obj, true)
+// if an object is bound to the given varName, and false otherwise.
+func (sc *Scope) Lookup(varName string) (CometObject, bool) {
+	obj, ok := sc.Variables[varName]
+	if ok {
+		return obj, ok
+	}
+	if sc.Parent != nil {
+		return sc.Parent.Lookup(varName)
+	}
+	return obj, ok
+}
+
+// Stores the object and binds it to the given varName.
+// The function will return true if this is overriding another variable with the same name in the current Scope.
+func (sc *Scope) Store(varName string, obj CometObject) bool {
+	_, has := sc.Variables[varName]
+	sc.Variables[varName] = obj
+	return has
 }
 
 func (ev *Evaluator) Eval(node parser.Node) CometObject {
@@ -48,6 +90,10 @@ func (ev *Evaluator) Eval(node parser.Node) CometObject {
 			return result
 		}
 		return &CometReturnWrapper{result}
+	case *parser.DeclarationStatement:
+		return ev.evalDeclareStatement(n)
+	case *parser.IdentifierExpression:
+		return ev.evalIdentifier(n)
 	}
 	return NopInstance
 }
@@ -148,6 +194,25 @@ func (ev *Evaluator) evalConditional(n *parser.IfStatement) CometObject {
 	} else {
 		return ev.Eval(&n.Else)
 	}
+}
+
+func (ev *Evaluator) evalDeclareStatement(n *parser.DeclarationStatement) CometObject {
+	value := ev.Eval(n.Expression)
+	if isError(value) {
+		return value
+	}
+	// TODO(chermehdi): add a shadowing diagnostic message if the store is overriding
+	// an existing variable
+	ev.scope.Store(n.Identifier.Literal, value)
+	return NopInstance
+}
+
+func (ev *Evaluator) evalIdentifier(n *parser.IdentifierExpression) CometObject {
+	obj, found := ev.scope.Lookup(n.Name)
+	if !found {
+		return createError("Identifier (%s) is not bounded to any value, have you tried declaring it?", n.Name)
+	}
+	return obj
 }
 
 func applyOp(op lexer.TokenType, left CometObject, right CometObject) CometObject {

@@ -243,6 +243,62 @@ func TestEvaluator_Eval_Errors(t *testing.T) {
 	}
 }
 
+func TestEvaluator_Eval_Declarations(t *testing.T) {
+	tests := []struct {
+		Src      string
+		Expected int64
+	}{
+		{
+			`var a = 1
+				a
+				`,
+			1,
+		},
+		{
+			`var a = 1 * 2 + 1
+				a
+				`,
+			3,
+		},
+
+		{
+			`var a = 1 * 2 + 1
+                 var c = 10
+				 var d = a * c
+				 d
+				`,
+			30,
+		},
+	}
+
+	evaluator := New()
+	for _, test := range tests {
+		rootNode := parseOrDie(test.Src)
+		v := evaluator.Eval(rootNode)
+		assertInteger(t, v, test.Expected)
+	}
+}
+
+func TestEvaluator_Eval_DeclarationError(t *testing.T) {
+	tests := []struct {
+		Src             string
+		ExpectedMessage string
+	}{
+		{
+			`var a = b * 10 
+				`,
+			"Identifier (b) is not bounded to any value, have you tried declaring it?",
+		},
+	}
+
+	evaluator := New()
+	for _, test := range tests {
+		rootNode := parseOrDie(test.Src)
+		v := evaluator.Eval(rootNode)
+		assertError(t, v, test.ExpectedMessage)
+	}
+}
+
 func assertError(t *testing.T, v CometObject, ExpectedErrorMsg string) {
 	error, ok := v.(*CometError)
 	assert.True(t, ok)
