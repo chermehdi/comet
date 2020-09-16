@@ -118,6 +118,137 @@ func TestEvaluator_Eval_Booleans(t *testing.T) {
 	}
 }
 
+func TestEvaluator_Eval_Conditionals(t *testing.T) {
+	tests := []struct {
+		Src      string
+		Expected bool
+	}{
+		{
+			`if(true) { true }`,
+			true,
+		},
+		{
+			`if(false) { true } else { false }`,
+			false,
+		},
+		{
+			`if(1 < 2) { true }`,
+			true,
+		},
+		{
+			`if(1 == 1) { true }`,
+			true,
+		},
+	}
+
+	evaluator := New()
+	for _, test := range tests {
+		rootNode := parseOrDie(test.Src)
+		v := evaluator.Eval(rootNode)
+		assertBoolean(t, v, test.Expected)
+	}
+}
+
+func TestEvaluator_Eval_ReturnStatement(t *testing.T) {
+	tests := []struct {
+		Src      string
+		Expected int64
+	}{
+		{
+			"return 10",
+			10,
+		},
+		{
+			`9 * 9
+				return 10`,
+			10,
+		},
+		{
+			`9 * 9
+				return 10
+				8 + 10`,
+			10,
+		},
+		{
+			`if(true) {
+					if (true) {
+						return 10
+					}
+					return 1
+				}`, 10,
+		},
+	}
+
+	evaluator := New()
+	for _, test := range tests {
+		rootNode := parseOrDie(test.Src)
+		v := evaluator.Eval(rootNode)
+		assertInteger(t, v, test.Expected)
+	}
+}
+
+func TestEvaluator_Eval_Errors(t *testing.T) {
+	tests := []struct {
+		Src              string
+		ExpectedErrorMsg string
+	}{
+		{
+			"1 + true",
+			"Cannot apply operator + on given types INTEGER and BOOLEAN",
+		},
+		{
+			"1 * true",
+			"Cannot apply operator * on given types INTEGER and BOOLEAN",
+		},
+		{
+			"1 - true",
+			"Cannot apply operator - on given types INTEGER and BOOLEAN",
+		},
+		{
+			"true > 1",
+			"Cannot apply operator > on given types BOOLEAN and INTEGER",
+		},
+		{
+			"true < 1",
+			"Cannot apply operator < on given types BOOLEAN and INTEGER",
+		},
+		{
+			"-true",
+			"Cannot apply operator (-) on none INTEGER type BOOLEAN",
+		},
+		{
+			"-false",
+			"Cannot apply operator (-) on none INTEGER type BOOLEAN",
+		},
+		{
+			"!1",
+			"Cannot apply operator (!) on none BOOLEAN type INTEGER",
+		},
+		{
+			`
+				if (true) {
+					!1
+					false
+				}
+				`,
+			"Cannot apply operator (!) on none BOOLEAN type INTEGER",
+		},
+	}
+
+	evaluator := New()
+	for _, test := range tests {
+		rootNode := parseOrDie(test.Src)
+		v := evaluator.Eval(rootNode)
+		assertError(t, v, test.ExpectedErrorMsg)
+	}
+}
+
+func assertError(t *testing.T, v CometObject, ExpectedErrorMsg string) {
+	error, ok := v.(*CometError)
+	assert.True(t, ok)
+	assert.Equal(t, ExpectedErrorMsg, error.Message)
+}
+
 func assertBoolean(t *testing.T, v CometObject, expected bool) {
 	boolean, ok := v.(*CometBool)
 	assert.True(t, ok)

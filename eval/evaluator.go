@@ -23,7 +23,7 @@ func New() *Evaluator {
 func (ev *Evaluator) Eval(node parser.Node) CometObject {
 	switch n := node.(type) {
 	case *parser.RootNode:
-		return ev.evalStatements(n.Statements)
+		return ev.evalRootNode(n.Statements)
 	case *parser.PrefixExpression:
 		return ev.evalPrefixExpression(n)
 	case *parser.NumberLiteralExpression:
@@ -38,31 +38,64 @@ func (ev *Evaluator) Eval(node parser.Node) CometObject {
 		return ev.evalBinaryExpression(n)
 	case *parser.ParenthesisedExpression:
 		return ev.Eval(n.Expression)
+	case *parser.IfStatement:
+		return ev.evalConditional(n)
+	case *parser.BlockStatement:
+		return ev.evalStatements(n.Statements)
+	case *parser.ReturnStatement:
+		result := ev.Eval(n.Expression)
+		if isError(result) {
+			return result
+		}
+		return &CometReturnWrapper{result}
 	}
 	return NopInstance
 }
 
-func (ev *Evaluator) evalStatements(statements []parser.Statement) CometObject {
-	var res CometObject
+func (ev *Evaluator) evalRootNode(statements []parser.Statement) CometObject {
+	var res CometObject = NopInstance
 	for _, st := range statements {
 		res = ev.Eval(st)
+		switch cur := res.(type) {
+		case *CometReturnWrapper:
+			return cur.Value
+		case *CometError:
+			return cur
+		}
+	}
+	return res
+}
+
+func (ev *Evaluator) evalStatements(statements []parser.Statement) CometObject {
+	var res CometObject = NopInstance
+	for _, st := range statements {
+		res = ev.Eval(st)
+		switch cur := res.(type) {
+		case *CometReturnWrapper:
+			return cur
+		case *CometError:
+			return cur
+		}
 	}
 	return res
 }
 
 func (ev *Evaluator) evalPrefixExpression(n *parser.PrefixExpression) CometObject {
 	res := ev.Eval(n.Right)
+	if isError(res) {
+		return res
+	}
 	switch n.Op.Type {
 	case lexer.Minus:
 		if res.Type() != IntType {
-			panic(fmt.Sprintf("Cannot apply operator (-) on none integer type %s", res.ToString()))
+			return createError("Cannot apply operator (-) on none INTEGER type %s", res.Type())
 		}
 		result := res.(*CometInt)
 		result.Value *= -1
 		return result
 	case lexer.Bang:
 		if res.Type() != BoolType {
-			panic(fmt.Sprintf("Cannot apply operator (!) on none boolean type %s", res.ToString()))
+			return createError("Cannot apply operator (!) on none BOOLEAN type %s", res.Type())
 		}
 		result := res.(*CometBool)
 		if result.Value {
@@ -77,7 +110,15 @@ func (ev *Evaluator) evalPrefixExpression(n *parser.PrefixExpression) CometObjec
 
 func (ev *Evaluator) evalBinaryExpression(n *parser.BinaryExpression) CometObject {
 	left := ev.Eval(n.Left)
+	if isError(left) {
+		return left
+	}
+
 	right := ev.Eval(n.Right)
+	if isError(right) {
+		return right
+	}
+
 	if left.Type() == IntType && right.Type() == IntType {
 		return applyOp(n.Op.Type, left, right)
 	}
@@ -94,6 +135,19 @@ func (ev *Evaluator) evalBinaryExpression(n *parser.BinaryExpression) CometObjec
 		}
 	}
 	return createError("Cannot apply operator %s on given types %v and %v", n.Op.Literal, left.Type(), right.Type())
+}
+
+func (ev *Evaluator) evalConditional(n *parser.IfStatement) CometObject {
+	predicateRes := ev.Eval(n.Test)
+	if predicateRes.Type() != BoolType {
+		return createError("Test part of the if statement should evaluate to CometBool, evaluated to %s instead", predicateRes.ToString())
+	}
+	result := predicateRes.(*CometBool)
+	if result.Value {
+		return ev.Eval(&n.Then)
+	} else {
+		return ev.Eval(&n.Else)
+	}
 }
 
 func applyOp(op lexer.TokenType, left CometObject, right CometObject) CometObject {
@@ -150,4 +204,8 @@ func boolValue(condition bool) *CometBool {
 		return TrueObject
 	}
 	return FalseObject
+}
+
+func isError(obj CometObject) bool {
+	return obj.Type() == ErrorType
 }

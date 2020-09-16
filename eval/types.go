@@ -8,7 +8,7 @@ type CometType string
 const (
 	IntType   = "INTEGER"
 	BoolType  = "BOOLEAN"
-	ErrorType = "Error"
+	ErrorType = "ERROR"
 	Nop       = "NOP"
 )
 
@@ -66,4 +66,16 @@ func (n *NopObject) Type() CometType {
 
 func (n *NopObject) ToString() string {
 	return "CometNop"
+}
+
+type CometReturnWrapper struct {
+	Value CometObject
+}
+
+func (c *CometReturnWrapper) Type() CometType {
+	return "CometReturnType"
+}
+
+func (c *CometReturnWrapper) ToString() string {
+	return fmt.Sprintf("CometWrapper(%s)", c.Value.ToString())
 }
