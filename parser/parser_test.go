@@ -747,6 +747,13 @@ func TestParser_Parse_ParseFunctionDeclaration(t *testing.T) {
 	}
 }
 
+func TestParser_Parse_ShouldFailWrongFunctionCall(t *testing.T) {
+	text := `func foo() {`
+	parser := New(text)
+	parser.Parse()
+	assert.True(t, parser.Errors.HasAny())
+}
+
 func TestParser_Parse_ParseFunctionCall(t *testing.T) {
 	tests := []struct {
 		Expr     string

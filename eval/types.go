@@ -1,15 +1,20 @@
 package eval
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/chermehdi/comet/parser"
+)
 
 // Type alias mapping some strings to types
 type CometType string
 
 const (
-	IntType   = "INTEGER"
-	BoolType  = "BOOLEAN"
-	ErrorType = "ERROR"
-	Nop       = "NOP"
+	IntType       = "INTEGER"
+	BoolType      = "BOOLEAN"
+	FuncType      = "FUNCTION"
+	ErrorType     = "ERROR"
+	ReturnWrapper = "ReturnWrapper"
+	Nop           = "NOP"
 )
 
 // Every object (or primitive) in the comet programming language will be representated
@@ -73,9 +78,24 @@ type CometReturnWrapper struct {
 }
 
 func (c *CometReturnWrapper) Type() CometType {
-	return "CometReturnType"
+	return ReturnWrapper
 }
 
 func (c *CometReturnWrapper) ToString() string {
 	return fmt.Sprintf("CometWrapper(%s)", c.Value.ToString())
+}
+
+type CometFunc struct {
+	Params []*parser.IdentifierExpression
+	Body   *parser.BlockStatement
+	Scope  *Scope
+}
+
+func (c *CometFunc) Type() CometType {
+	return FuncType
+}
+
+func (c *CometFunc) ToString() string {
+	// TODO(chermehdi): better ToString() representation for functions.
+	return fmt.Sprintf("CometFunc")
 }

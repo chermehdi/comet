@@ -55,7 +55,7 @@ func TestEvaluator_Eval_Integers(t *testing.T) {
 		},
 	}
 
-	evaluator := New()
+	evaluator := NewEvaluator()
 	for _, test := range tests {
 		rootNode := parseOrDie(test.Token)
 		v := evaluator.Eval(rootNode)
@@ -110,7 +110,7 @@ func TestEvaluator_Eval_Booleans(t *testing.T) {
 		},
 	}
 
-	evaluator := New()
+	evaluator := NewEvaluator()
 	for _, test := range tests {
 		rootNode := parseOrDie(test.Token)
 		v := evaluator.Eval(rootNode)
@@ -141,7 +141,7 @@ func TestEvaluator_Eval_Conditionals(t *testing.T) {
 		},
 	}
 
-	evaluator := New()
+	evaluator := NewEvaluator()
 	for _, test := range tests {
 		rootNode := parseOrDie(test.Src)
 		v := evaluator.Eval(rootNode)
@@ -179,7 +179,7 @@ func TestEvaluator_Eval_ReturnStatement(t *testing.T) {
 		},
 	}
 
-	evaluator := New()
+	evaluator := NewEvaluator()
 	for _, test := range tests {
 		rootNode := parseOrDie(test.Src)
 		v := evaluator.Eval(rootNode)
@@ -235,7 +235,7 @@ func TestEvaluator_Eval_Errors(t *testing.T) {
 		},
 	}
 
-	evaluator := New()
+	evaluator := NewEvaluator()
 	for _, test := range tests {
 		rootNode := parseOrDie(test.Src)
 		v := evaluator.Eval(rootNode)
@@ -271,7 +271,7 @@ func TestEvaluator_Eval_Declarations(t *testing.T) {
 		},
 	}
 
-	evaluator := New()
+	evaluator := NewEvaluator()
 	for _, test := range tests {
 		rootNode := parseOrDie(test.Src)
 		v := evaluator.Eval(rootNode)
@@ -291,7 +291,7 @@ func TestEvaluator_Eval_DeclarationError(t *testing.T) {
 		},
 	}
 
-	evaluator := New()
+	evaluator := NewEvaluator()
 	for _, test := range tests {
 		rootNode := parseOrDie(test.Src)
 		v := evaluator.Eval(rootNode)
@@ -300,9 +300,9 @@ func TestEvaluator_Eval_DeclarationError(t *testing.T) {
 }
 
 func assertError(t *testing.T, v CometObject, ExpectedErrorMsg string) {
-	error, ok := v.(*CometError)
+	err, ok := v.(*CometError)
 	assert.True(t, ok)
-	assert.Equal(t, ExpectedErrorMsg, error.Message)
+	assert.Equal(t, ExpectedErrorMsg, err.Message)
 }
 
 func assertBoolean(t *testing.T, v CometObject, expected bool) {

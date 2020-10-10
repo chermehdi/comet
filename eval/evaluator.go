@@ -13,21 +13,24 @@ var (
 )
 
 type Evaluator struct {
-	scope *Scope
+	Scope *Scope
 }
 
-func New() *Evaluator {
+// Constructs a new evaluator
+// Each constructed evaluator has it's own Scope, i.e variables accessible from one Evaluator
+// Are not accessible from another one.
+func NewEvaluator() *Evaluator {
 	return &Evaluator{
 		NewScope(nil),
 	}
 }
 
 type Scope struct {
-	// The variables bound to this scope instance
+	// The variables bound to this Scope instance
 	Variables map[string]CometObject
 
-	// The parent scope if we are inside a function
-	// if this is nil, this is the global scope instance.
+	// The parent Scope if we are inside a function
+	// if this is nil, this is the global Scope instance.
 	Parent *Scope
 }
 
@@ -41,7 +44,7 @@ func NewScope(parent *Scope) *Scope {
 }
 
 // Looks up the object bound to the varName
-// The lookup should explore the parent(s) scope as well ans should return a tuple (obj, true)
+// The lookup should explore the parent(s) Scope as well ans should return a tuple (obj, true)
 // if an object is bound to the given varName, and false otherwise.
 func (sc *Scope) Lookup(varName string) (CometObject, bool) {
 	obj, ok := sc.Variables[varName]
@@ -62,6 +65,10 @@ func (sc *Scope) Store(varName string, obj CometObject) bool {
 	return has
 }
 
+// Evaluates the given node into a CometObject
+// If the node is a statement a CometNop object is returned
+// Errors are CometObject instances as well, and they are designed to block
+// the evaluation process.
 func (ev *Evaluator) Eval(node parser.Node) CometObject {
 	switch n := node.(type) {
 	case *parser.RootNode:
@@ -94,6 +101,15 @@ func (ev *Evaluator) Eval(node parser.Node) CometObject {
 		return ev.evalDeclareStatement(n)
 	case *parser.IdentifierExpression:
 		return ev.evalIdentifier(n)
+	case *parser.FunctionStatement:
+		return ev.registerFunc(n)
+	case *parser.CallExpression:
+		result := ev.evalCallExpression(n)
+		if result.Type() == ReturnWrapper {
+			unwrapped := result.(*CometReturnWrapper)
+			return unwrapped.Value
+		}
+		return result
 	}
 	return NopInstance
 }
@@ -203,16 +219,51 @@ func (ev *Evaluator) evalDeclareStatement(n *parser.DeclarationStatement) CometO
 	}
 	// TODO(chermehdi): add a shadowing diagnostic message if the store is overriding
 	// an existing variable
-	ev.scope.Store(n.Identifier.Literal, value)
+	ev.Scope.Store(n.Identifier.Literal, value)
 	return NopInstance
 }
 
 func (ev *Evaluator) evalIdentifier(n *parser.IdentifierExpression) CometObject {
-	obj, found := ev.scope.Lookup(n.Name)
+	obj, found := ev.Scope.Lookup(n.Name)
 	if !found {
 		return createError("Identifier (%s) is not bounded to any value, have you tried declaring it?", n.Name)
 	}
 	return obj
+}
+
+func (ev *Evaluator) registerFunc(n *parser.FunctionStatement) CometObject {
+	function := &CometFunc{
+		n.Parameters,
+		n.Block,
+		NewScope(ev.Scope),
+	}
+	ev.Scope.Store(n.Name, function)
+	return function
+}
+
+func (ev *Evaluator) evalCallExpression(n *parser.CallExpression) CometObject {
+	funcName := n.Name
+	function, found := ev.Scope.Lookup(funcName)
+	if !found {
+		return createError("Cannot find callable symbol %s", function)
+	}
+	if function.Type() != FuncType {
+		return createError("Cannot invoke none callable object of type %s", function.Type())
+	}
+
+	funObj, _ := function.(*CometFunc)
+	for i, param := range funObj.Params {
+		funObj.Scope.Variables[param.Name] = ev.Eval(n.Arguments[i])
+	}
+	oldScope := ev.Scope
+	ev.Scope = funObj.Scope
+	result := ev.Eval(funObj.Body)
+	ev.Scope = oldScope
+	if result.Type() == ReturnWrapper {
+		unwrapped := result.(*CometReturnWrapper)
+		return unwrapped
+	}
+	return result
 }
 
 func applyOp(op lexer.TokenType, left CometObject, right CometObject) CometObject {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/chermehdi/comet/lexer"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -35,6 +36,46 @@ func getPrecedence(token lexer.Token) int {
 	return val
 }
 
+type ParseError struct {
+	Message string
+	Token   lexer.Token
+}
+
+func (p *ParseError) Error() string {
+	return ""
+}
+
+// Container for errors specific to comet.
+type ErrorBag struct {
+	Errors []*ParseError
+}
+
+func (b *ErrorBag) String() string {
+	var sb strings.Builder
+	for _, err := range b.Errors {
+		sb.WriteString(err.Message)
+		sb.WriteRune('\n')
+	}
+	return sb.String()
+}
+
+func (b *ErrorBag) Report(token lexer.Token, message string, params ...interface{}) {
+	b.Errors = append(b.Errors, &ParseError{
+		Message: fmt.Sprintf(message, params...),
+		Token:   token,
+	})
+}
+
+func (b *ErrorBag) HasAny() bool {
+	return len(b.Errors) > 0
+}
+
+func newErrorBag() *ErrorBag {
+	return &ErrorBag{
+		make([]*ParseError, 0),
+	}
+}
+
 // Functions of this type are going to be used to parse binary operations such as addition subtraction ...
 // The first parameters is the already parsed left side of the operator and the function should parse
 
@@ -51,6 +92,7 @@ type Parser struct {
 	CurrentToken lexer.Token
 	NextToken    lexer.Token
 
+	Errors      *ErrorBag
 	prefixFuncs map[lexer.TokenType]prefixParseFunction
 	binaryFuncs map[lexer.TokenType]binaryParseFunction
 }
@@ -58,7 +100,8 @@ type Parser struct {
 func New(src string) *Parser {
 	lexer := lexer.NewLexer(src)
 	parser := &Parser{
-		lexer: lexer,
+		lexer:  lexer,
+		Errors: newErrorBag(),
 	}
 	parser.init()
 	return parser
@@ -179,7 +222,8 @@ func (p *Parser) parsePrefixExpression() Expression {
 func (p *Parser) parseNumberLiteral() Expression {
 	val, err := strconv.ParseInt(p.CurrentToken.Literal, 10, 64)
 	if err != nil {
-		panic("Could not parse integer value")
+		p.Errors.Report(p.CurrentToken, "Could not parse integer value %s", p.CurrentToken.Literal)
+		return &NumberLiteralExpression{0}
 	}
 	return &NumberLiteralExpression{ActualValue: val}
 }
@@ -216,7 +260,7 @@ func (p *Parser) parseCallArguments() []Expression {
 	}
 	p.advance()
 	if p.CurrentToken.Type != lexer.CloseParent {
-		panic(fmt.Sprintf("Expected %s, got %s", lexer.CloseParent, p.CurrentToken.Literal))
+		p.Errors.Report(p.CurrentToken, "Expected ')' got %s", p.CurrentToken.Literal)
 	}
 	return args
 }
@@ -251,7 +295,8 @@ func (p *Parser) parseBinaryExpression(left Expression) Expression {
 func (p *Parser) parseInternal(currentPrecedence int) Expression {
 	prefix, has := p.prefixFuncs[p.CurrentToken.Type]
 	if !has {
-		panic(fmt.Sprintf("No parsing function found for %s", p.CurrentToken))
+		p.Errors.Report(p.CurrentToken, "No parsing function found for %s", p.CurrentToken.Literal)
+		return nil
 	}
 	left := prefix()
 	for currentPrecedence < getPrecedence(p.NextToken) {
@@ -269,7 +314,11 @@ func (p *Parser) parseBlockStatement() *BlockStatement {
 	blockStatement := &BlockStatement{}
 	statements := make([]Statement, 0)
 	p.advanceExpect(lexer.OpenBrace)
-	for p.CurrentToken.Type != lexer.CloseBrace && p.CurrentToken.Type != lexer.EOF {
+	for p.CurrentToken.Type != lexer.CloseBrace {
+		if p.CurrentToken.Type == lexer.EOF {
+			p.Errors.Report(p.CurrentToken, "Unexpected EOF")
+			break
+		}
 		curStatement := p.parseStatement()
 		if curStatement == nil {
 			// TODO: probably an error, fix when error handling is added.
@@ -337,14 +386,14 @@ func (p *Parser) parseFunctionStatement() Statement {
 
 func (p *Parser) advanceExpect(expected lexer.TokenType) {
 	if p.CurrentToken.Type != expected {
-		panic(fmt.Sprintf("Expected %s got %s", expected, p.CurrentToken.Literal))
+		p.Errors.Report(p.CurrentToken, "Expected %s got %s instead", expected, p.CurrentToken.Literal)
 	}
 	p.advance()
 }
 
 func (p *Parser) expectNext(expected lexer.TokenType) {
 	if p.NextToken.Type != expected {
-		panic(fmt.Sprintf("Expected %s got %s", expected, p.CurrentToken.Literal))
+		p.Errors.Report(p.CurrentToken, "Expected %s got %s instead", expected, p.CurrentToken.Literal)
 	}
 	p.advance()
 }
