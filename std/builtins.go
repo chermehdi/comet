@@ -46,7 +46,7 @@ var Builtins = []*Builtin{
 				return NopInstance
 			}
 			if len(args) != 1 {
-				return CreateError("Expected 0 or 1 arguments, got %s.", len(args))
+				return CreateError("Expected 0 or 1 arguments, got %d.", len(args))
 			}
 			// This works if args[0] is a string, int or boolean
 			// Maybe we should only allow this for the defined types, but for the time being it's not required.
