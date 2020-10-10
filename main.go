@@ -26,7 +26,6 @@ version: %s
 var filePath = flag.String("file", "", "File to run")
 
 func main() {
-	fmt.Print(BANNER)
 	flag.Parse()
 	if *filePath != "" {
 		file, err := os.Open(*filePath)
@@ -46,9 +45,10 @@ func main() {
 			return
 		}
 		evaluator := eval.NewEvaluator()
-		fmt.Printf("%v\n", evaluator.Eval(rootNode))
+		evaluator.Eval(rootNode)
 	} else {
 		// REPL MODE
+		fmt.Print(BANNER)
 		repler := repl.Repl{}
 		repler.Start(os.Stdin, os.Stdout)
 	}

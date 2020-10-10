@@ -3,6 +3,7 @@ package eval
 import (
 	"fmt"
 	"github.com/chermehdi/comet/parser"
+	"github.com/chermehdi/comet/std"
 	"github.com/stretchr/testify/assert"
 	"math"
 	"testing"
@@ -299,20 +300,20 @@ func TestEvaluator_Eval_DeclarationError(t *testing.T) {
 	}
 }
 
-func assertError(t *testing.T, v CometObject, ExpectedErrorMsg string) {
-	err, ok := v.(*CometError)
+func assertError(t *testing.T, v std.CometObject, ExpectedErrorMsg string) {
+	err, ok := v.(*std.CometError)
 	assert.True(t, ok)
 	assert.Equal(t, ExpectedErrorMsg, err.Message)
 }
 
-func assertBoolean(t *testing.T, v CometObject, expected bool) {
-	boolean, ok := v.(*CometBool)
+func assertBoolean(t *testing.T, v std.CometObject, expected bool) {
+	boolean, ok := v.(*std.CometBool)
 	assert.True(t, ok)
 	assert.Equal(t, expected, boolean.Value)
 }
 
-func assertInteger(t *testing.T, v CometObject, expected int64) {
-	integer, ok := v.(*CometInt)
+func assertInteger(t *testing.T, v std.CometObject, expected int64) {
+	integer, ok := v.(*std.CometInt)
 	assert.True(t, ok)
 	assert.Equal(t, expected, integer.Value)
 }

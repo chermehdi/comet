@@ -1,4 +1,4 @@
-package eval
+package std
 
 import (
 	"fmt"
@@ -11,6 +11,7 @@ type CometType string
 const (
 	IntType       = "INTEGER"
 	BoolType      = "BOOLEAN"
+	StrType       = "STR"
 	FuncType      = "FUNCTION"
 	ErrorType     = "ERROR"
 	ReturnWrapper = "ReturnWrapper"
@@ -49,6 +50,20 @@ func (b *CometBool) Type() CometType {
 
 func (b *CometBool) ToString() string {
 	return fmt.Sprintf("CometBool(%v)", b.Value)
+}
+
+type CometStr struct {
+	Value string
+	// Caching the size could prove beneficial, can't tell without benchmarks
+	Size int
+}
+
+func (c *CometStr) Type() CometType {
+	return StrType
+}
+
+func (c *CometStr) ToString() string {
+	return fmt.Sprintf("CometStr(%s)", c.Value)
 }
 
 type CometError struct {
@@ -97,4 +112,11 @@ func (c *CometFunc) Type() CometType {
 func (c *CometFunc) ToString() string {
 	// TODO(chermehdi): better ToString() representation for functions.
 	return fmt.Sprintf("CometFunc")
+}
+
+func CreateError(s string, params ...interface{}) CometObject {
+	message := fmt.Sprintf(s, params...)
+	return &CometError{
+		message,
+	}
 }
