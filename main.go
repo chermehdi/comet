@@ -1,8 +1,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"github.com/chermehdi/comet/eval"
+	"github.com/chermehdi/comet/parser"
 	"github.com/chermehdi/comet/repl"
+	"io/ioutil"
 	"os"
 )
 
@@ -19,8 +23,33 @@ author : @chermehdi
 version: %s 
 `, VERSION)
 
+var filePath = flag.String("file", "", "File to run")
+
 func main() {
 	fmt.Print(BANNER)
-	repler := repl.Repl{}
-	repler.Start(os.Stdin, os.Stdout)
+	flag.Parse()
+	if *filePath != "" {
+		file, err := os.Open(*filePath)
+		if err != nil {
+			fmt.Println("Could not read passed file")
+			return
+		}
+		source, err := ioutil.ReadAll(file)
+		if err != nil {
+			fmt.Println("Could not read passed file")
+			return
+		}
+		p := parser.New(string(source))
+		rootNode := p.Parse()
+		if p.Errors.HasAny() {
+			fmt.Println(p.Errors)
+			return
+		}
+		evaluator := eval.NewEvaluator()
+		fmt.Printf("%v\n", evaluator.Eval(rootNode))
+	} else {
+		// REPL MODE
+		repler := repl.Repl{}
+		repler.Start(os.Stdin, os.Stdout)
+	}
 }

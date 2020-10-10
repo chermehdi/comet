@@ -88,7 +88,6 @@ func (c *CometReturnWrapper) ToString() string {
 type CometFunc struct {
 	Params []*parser.IdentifierExpression
 	Body   *parser.BlockStatement
-	Scope  *Scope
 }
 
 func (c *CometFunc) Type() CometType {

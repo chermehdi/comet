@@ -233,9 +233,8 @@ func (ev *Evaluator) evalIdentifier(n *parser.IdentifierExpression) CometObject 
 
 func (ev *Evaluator) registerFunc(n *parser.FunctionStatement) CometObject {
 	function := &CometFunc{
-		n.Parameters,
-		n.Block,
-		NewScope(ev.Scope),
+		Params: n.Parameters,
+		Body:   n.Block,
 	}
 	ev.Scope.Store(n.Name, function)
 	return function
@@ -252,17 +251,14 @@ func (ev *Evaluator) evalCallExpression(n *parser.CallExpression) CometObject {
 	}
 
 	funObj, _ := function.(*CometFunc)
+	callSiteScope := NewScope(ev.Scope)
 	for i, param := range funObj.Params {
-		funObj.Scope.Variables[param.Name] = ev.Eval(n.Arguments[i])
+		callSiteScope.Variables[param.Name] = ev.Eval(n.Arguments[i])
 	}
 	oldScope := ev.Scope
-	ev.Scope = funObj.Scope
+	ev.Scope = callSiteScope
 	result := ev.Eval(funObj.Body)
 	ev.Scope = oldScope
-	if result.Type() == ReturnWrapper {
-		unwrapped := result.(*CometReturnWrapper)
-		return unwrapped
-	}
 	return result
 }
 
