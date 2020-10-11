@@ -300,6 +300,42 @@ func TestEvaluator_Eval_DeclarationError(t *testing.T) {
 	}
 }
 
+func TestEvaluator_Eval_FunctionDeclarationTest(t *testing.T) {
+	tests := []struct {
+		Src        string
+		AssertFunc func(*Evaluator)
+	}{
+		{
+			Src: `func a() {}`,
+			AssertFunc: func(evaluator *Evaluator) {
+				obj, found := evaluator.Scope.Lookup("a")
+				assert.True(t, found)
+				assert.True(t, std.FuncType == obj.Type())
+				function, _ := obj.(*std.CometFunc)
+				assert.Len(t, function.Params, 0)
+			},
+		},
+		{
+			Src: `func a(p1, p2) {}`,
+			AssertFunc: func(evaluator *Evaluator) {
+				obj, found := evaluator.Scope.Lookup("a")
+				assert.True(t, found)
+				assert.True(t, std.FuncType == obj.Type())
+				function, _ := obj.(*std.CometFunc)
+				assert.Len(t, function.Params, 2)
+				assert.Equal(t, "p1", function.Params[0].Name)
+				assert.Equal(t, "p2", function.Params[1].Name)
+			},
+		},
+	}
+	evaluator := NewEvaluator()
+	for _, test := range tests {
+		rootNode := parseOrDie(test.Src)
+		evaluator.Eval(rootNode)
+		test.AssertFunc(evaluator)
+	}
+}
+
 func assertError(t *testing.T, v std.CometObject, ExpectedErrorMsg string) {
 	err, ok := v.(*std.CometError)
 	assert.True(t, ok)

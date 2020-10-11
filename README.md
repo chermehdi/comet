@@ -166,6 +166,16 @@ LETTER: [a-zA-Z];
 STRING: '"' ~('\r' | '\n' | '"')* '"' ;
 ```
 
+## Tasks
+
+These are the list of the tasks that I think should be done before having the first release:
+
+- [ ] Add Arrays support
+- [ ] Add Comments support
+- [ ] Add Hash support
+- [ ] Add import modules support
+- [ ] Add a standard library
+
 ## Contribution
 
 - Feel free to submit new issues, or pull requests.
