@@ -55,6 +55,15 @@ var Builtins = []*Builtin{
 			return NopInstance
 		},
 	},
+	{
+		Name: "toString",
+		Func: func(args ...CometObject) CometObject {
+			if len(args) != 1 {
+				return CreateError("Expected 1 argument, got %d instead", len(args))
+			}
+			return ToString(args[0])
+		},
+	},
 }
 
 // Standard library to convert any object type to a string value.

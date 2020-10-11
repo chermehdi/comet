@@ -63,7 +63,7 @@ func (c *CometStr) Type() CometType {
 }
 
 func (c *CometStr) ToString() string {
-	return fmt.Sprintf("CometStr(%s)", c.Value)
+	return fmt.Sprintf(`CometStr("%s")`, c.Value)
 }
 
 type CometError struct {
