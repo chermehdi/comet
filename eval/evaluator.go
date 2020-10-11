@@ -108,13 +108,21 @@ func (ev *Evaluator) Eval(node parser.Node) std.CometObject {
 		return ev.registerFunc(n)
 	case *parser.CallExpression:
 		result := ev.evalCallExpression(n)
-		if result.Type() == std.ReturnWrapper {
-			unwrapped := result.(*std.CometReturnWrapper)
-			return unwrapped.Value
-		}
+		return unwrap(result)
+	case *parser.AssignExpression:
+		result := unwrap(ev.Eval(n.Value))
+		ev.Scope.Store(n.VarName, result)
 		return result
 	}
 	return std.NopInstance
+}
+
+func unwrap(result std.CometObject) std.CometObject {
+	if result.Type() == std.ReturnWrapper {
+		unwrapped := result.(*std.CometReturnWrapper)
+		return unwrapped.Value
+	}
+	return result
 }
 
 func (ev *Evaluator) evalRootNode(statements []parser.Statement) std.CometObject {

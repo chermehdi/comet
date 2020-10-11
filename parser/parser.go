@@ -238,6 +238,14 @@ func (p *Parser) parseIdentifier() Expression {
 		p.advance()
 		callExpression.Arguments = p.parseCallArguments()
 		return callExpression
+	} else if p.NextToken.Type == lexer.Assign {
+		assignExpression := &AssignExpression{
+			VarName: p.CurrentToken.Literal,
+		}
+		p.expectNext(lexer.Assign)
+		p.advance()
+		assignExpression.Value = p.parseExpression()
+		return assignExpression
 	} else {
 		// This is an identifier
 		return &IdentifierExpression{Name: p.CurrentToken.Literal}

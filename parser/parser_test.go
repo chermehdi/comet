@@ -86,6 +86,14 @@ func (t *TestingVisitor) VisitIdentifierExpression(expression IdentifierExpressi
 	t.ptr++
 }
 
+func (t *TestingVisitor) visitAssignExpression(assign AssignExpression) {
+	currentNode := t.expected[t.ptr]
+	currentAssignExpression, ok := currentNode.(*AssignExpression)
+	assert.True(t.t, ok)
+	assert.Equal(t.t, currentAssignExpression.VarName, assign.VarName)
+	t.ptr++
+}
+
 func (t *TestingVisitor) VisitDeclarationStatement(statement DeclarationStatement) {
 	currentNode := t.expected[t.ptr]
 	currentDecStatement, ok := currentNode.(*DeclarationStatement)
@@ -121,6 +129,10 @@ func (t *TestingVisitor) VisitIfStatement(statement IfStatement) {
 	statement.Test.Accept(t)
 	statement.Then.Accept(t)
 	statement.Else.Accept(t)
+}
+
+func (t *TestingVisitor) VisitForStatement(statement ForStatement) {
+	panic("implement me")
 }
 
 func (t *TestingVisitor) VisitFunctionStatement(statement FunctionStatement) {
@@ -516,6 +528,38 @@ func TestParser_ParsePrefixOperators(t *testing.T) {
 	}
 }
 
+func TestParser_ParseAssignExpression(t *testing.T) {
+
+	tests := []struct {
+		Expr     string
+		Expected []Node
+	}{
+		{
+			Expr: `
+	a = 10 + 1
+`,
+			Expected: []Node{
+				&AssignExpression{VarName: "a"},
+				&NumberLiteralExpression{ActualValue: int64(10)},
+				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&NumberLiteralExpression{ActualValue: int64(1)},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		parser := New(test.Expr)
+		rootNode := parser.Parse()
+		assert.NotNil(t, rootNode)
+		testingVisitor := &TestingVisitor{
+			expected: test.Expected,
+			ptr:      0,
+			t:        t,
+		}
+		rootNode.Accept(testingVisitor)
+	}
+}
+
 func TestParser_ParseBlockStatement(t *testing.T) {
 	tests := []struct {
 		Expr     string
@@ -678,7 +722,39 @@ func TestParser_ParseIfStatement(t *testing.T) {
 		rootNode.Accept(testingVisitor)
 	}
 }
+func TestParser_ParseForStatement(t *testing.T) {
+	tests := []struct {
+		Expr     string
+		Expected []Node
+	}{
+		//		{
+		//			Expr: `
+		//				for(var i = 0; i < 10; i = i + 1) {
+		//				}
+		//`,
+		//			Expected: []Node{
+		//				&IfStatement{},
+		//				&IdentifierExpression{Name: "a"},
+		//				&BinaryExpression{Op: lexer.Token{Literal: "=="}},
+		//				&NumberLiteralExpression{ActualValue: int64(1)},
+		//				&BlockStatement{},
+		//				&BlockStatement{}, // accounting for the then empty block.
+		//			},
+		//		},
+	}
 
+	for _, test := range tests {
+		parser := New(test.Expr)
+		rootNode := parser.Parse()
+		assert.NotNil(t, rootNode)
+		testingVisitor := &TestingVisitor{
+			expected: test.Expected,
+			ptr:      0,
+			t:        t,
+		}
+		rootNode.Accept(testingVisitor)
+	}
+}
 func TestParser_Parse_ParseFunctionDeclaration(t *testing.T) {
 	tests := []struct {
 		Expr     string
