@@ -66,6 +66,10 @@ func (sc *Scope) Store(varName string, obj std.CometObject) bool {
 	return has
 }
 
+func (sc *Scope) Clear(name string) {
+	delete(sc.Variables, name)
+}
+
 // Evaluates the given node into a CometObject
 // If the node is a statement a CometNop object is returned
 // Errors are CometObject instances as well, and they are designed to block
@@ -113,6 +117,8 @@ func (ev *Evaluator) Eval(node parser.Node) std.CometObject {
 		result := unwrap(ev.Eval(n.Value))
 		ev.Scope.Store(n.VarName, result)
 		return result
+	case *parser.ForStatement:
+		return unwrap(ev.evalForStatement(n))
 	}
 	return std.NopInstance
 }
@@ -313,6 +319,28 @@ func (ev *Evaluator) registerBuiltin(builtin *std.Builtin) {
 
 func (ev *Evaluator) invokeBuiltin(name string, args ...std.CometObject) std.CometObject {
 	return ev.Builtins[name].Func(args...)
+}
+
+func (ev *Evaluator) evalForStatement(n *parser.ForStatement) std.CometObject {
+	obj := ev.Eval(n.Range)
+	switch obj.Type() {
+	case std.RangeType:
+		rangeObj := obj.(*std.CometRange)
+		oldScope := ev.Scope
+		curScope := NewScope(oldScope)
+		ev.Scope = curScope
+		for i := rangeObj.From.Value; i <= rangeObj.To.Value; i++ {
+			ev.Scope.Store(n.Key.Name, &std.CometInt{Value: i})
+			ev.Scope.Store(n.Value.Name, &std.CometInt{Value: i})
+			ev.Eval(n.Body)
+		}
+		ev.Scope.Clear(n.Key.Name)
+		ev.Scope.Clear(n.Value.Name)
+		ev.Scope = oldScope
+		return std.NopInstance
+	default:
+		panic("not implemented yet!!")
+	}
 }
 
 func applyOp(op lexer.TokenType, left std.CometObject, right std.CometObject) std.CometObject {
