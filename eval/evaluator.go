@@ -193,6 +193,24 @@ func (ev *Evaluator) evalBinaryExpression(n *parser.BinaryExpression) std.CometO
 	if left.Type() == std.StrType && right.Type() == std.StrType {
 		return applyStrOp(n.Op.Type, left, right)
 	}
+	if left.Type() == std.StrType || right.Type() == std.StrType {
+		// one of the two is a string, the other one should be promoted to a string
+		if n.Op.Type == lexer.Plus {
+			return applyStrOp(n.Op.Type, std.ToString(left), std.ToString(right))
+		} else if n.Op.Type == lexer.Mul && (left.Type() == std.IntType || right.Type() == std.IntType) {
+			if left.Type() == std.IntType {
+				leftValue := left.(*std.CometInt)
+				rightValue := right.(*std.CometStr)
+				return &std.CometStr{Value: strings.Repeat(rightValue.Value, int(leftValue.Value)), Size: int(leftValue.Value) * rightValue.Size}
+			} else {
+				leftValue := left.(*std.CometStr)
+				rightValue := right.(*std.CometInt)
+				return &std.CometStr{Value: strings.Repeat(leftValue.Value, int(rightValue.Value)), Size: int(rightValue.Value) * leftValue.Size}
+			}
+		} else {
+			return std.CreateError("Cannot apply operation '%s' on operands of type '%s' and '%s'", n.Op.Literal, left.Type(), right.Type())
+		}
+	}
 	if left.Type() != right.Type() {
 		// operators == and != are applicable here, Objects with different types are always not equal in comet.
 		switch n.Op.Type {

@@ -2,6 +2,7 @@ package std
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type Callback func(args ...CometObject) CometObject
@@ -54,6 +55,28 @@ var Builtins = []*Builtin{
 			return NopInstance
 		},
 	},
+}
+
+// Standard library to convert any object type to a string value.
+// Newly added types should add their string conversion implementation as well.
+func ToString(object CometObject) *CometStr {
+	switch n := object.(type) {
+	case *CometStr:
+		return n
+	case *CometBool:
+		return &CometStr{Value: strconv.FormatBool(n.Value), Size: 4}
+	case *CometInt:
+		value := strconv.FormatInt(n.Value, 10)
+		return &CometStr{Value: value, Size: len(value)}
+	case *CometFunc:
+		value := n.ToString()
+		return &CometStr{Value: value, Size: len(value)}
+	case *CometError:
+		value := n.Message
+		return &CometStr{Value: value, Size: len(value)}
+	default:
+		panic("All types should have been exhausted!!")
+	}
 }
 
 func extractPrimitive(object CometObject) interface{} {
