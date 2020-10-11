@@ -54,10 +54,12 @@ const (
 	If     = "if"
 	Else   = "else"
 	For    = "for"
+	In     = "in"
 
 	// Seperators
 	Comma   = ","
 	Dot     = "."
+	DotDot  = ".."
 	SemiCol = ";"
 
 	// Identifier
@@ -77,4 +79,5 @@ var Keywords = map[string]TokenType{
 	"if":     If,
 	"else":   Else,
 	"for":    For,
+	"in":     In,
 }

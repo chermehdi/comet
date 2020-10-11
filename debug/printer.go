@@ -13,6 +13,15 @@ type PrintingVisitor struct {
 	buffer bytes.Buffer
 }
 
+func (p *PrintingVisitor) VisitAssignExpression(expression parser.AssignExpression) {
+	p.printIndent()
+	p.buffer.WriteString(fmt.Sprintf("AssignmentExpression(%s)", expression.VarName))
+}
+
+func (p *PrintingVisitor) VisitForStatement(statement parser.ForStatement) {
+	panic("implement me")
+}
+
 func (p *PrintingVisitor) VisitStringLiteral(literal parser.StringLiteral) {
 	p.printIndent()
 	p.buffer.WriteString(fmt.Sprintf("StringLiteral(%s)\n", literal.Value))

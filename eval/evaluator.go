@@ -339,6 +339,8 @@ func applyOp(op lexer.TokenType, left std.CometObject, right std.CometObject) st
 		return boolValue(leftInt.Value >= rightInt.Value)
 	case lexer.GT:
 		return boolValue(leftInt.Value > rightInt.Value)
+	case lexer.DotDot:
+		return &std.CometRange{From: *leftInt, To: *rightInt}
 	default:
 		return std.CreateError("Cannot recognize binary operator %s", op)
 	}

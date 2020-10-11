@@ -75,7 +75,12 @@ func (l *Lexer) Next() Token {
 	case '}':
 		result = NewToken(CloseBrace, "}")
 	case '.':
-		result = NewToken(Dot, ".")
+		if l.peek() == '.' {
+			l.advance()
+			result = NewToken(DotDot, "..")
+		} else {
+			result = NewToken(Dot, ".")
+		}
 	case ';':
 		result = NewToken(SemiCol, ";")
 	case ',':

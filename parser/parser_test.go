@@ -15,18 +15,16 @@ type TestingVisitor struct {
 	t        *testing.T
 }
 
+func (t *TestingVisitor) VisitExpression(Expression) {}
+
+func (t *TestingVisitor) VisitStatement(Statement) {}
+
 func (t *TestingVisitor) VisitStringLiteral(literal StringLiteral) {
 	currentNode := t.expected[t.ptr]
 	currentStringLiteral, ok := currentNode.(*StringLiteral)
 	assert.True(t.t, ok)
 	assert.Equal(t.t, currentStringLiteral.Value, literal.Value)
 	t.ptr++
-}
-
-func (t *TestingVisitor) VisitExpression(Expression) {
-}
-
-func (t *TestingVisitor) VisitStatement(Statement) {
 }
 
 func (t *TestingVisitor) VisitRootNode(node RootNode) {
@@ -86,7 +84,7 @@ func (t *TestingVisitor) VisitIdentifierExpression(expression IdentifierExpressi
 	t.ptr++
 }
 
-func (t *TestingVisitor) visitAssignExpression(assign AssignExpression) {
+func (t *TestingVisitor) VisitAssignExpression(assign AssignExpression) {
 	currentNode := t.expected[t.ptr]
 	currentAssignExpression, ok := currentNode.(*AssignExpression)
 	assert.True(t.t, ok)
@@ -132,7 +130,14 @@ func (t *TestingVisitor) VisitIfStatement(statement IfStatement) {
 }
 
 func (t *TestingVisitor) VisitForStatement(statement ForStatement) {
-	panic("implement me")
+	currentNode := t.expected[t.ptr]
+	_, ok := currentNode.(*ForStatement)
+	assert.True(t.t, ok)
+	t.ptr++
+	statement.Key.Accept(t)
+	statement.Value.Accept(t)
+	statement.Range.Accept(t)
+	statement.Body.Accept(t)
 }
 
 func (t *TestingVisitor) VisitFunctionStatement(statement FunctionStatement) {
@@ -235,6 +240,22 @@ func TestParser_Parse_SimpleMathExpressions(t *testing.T) {
 				&NumberLiteralExpression{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
 				&NumberLiteralExpression{ActualValue: int64(2)},
+			},
+		},
+		{
+			Expr: "1..2",
+			Expected: []Node{
+				&NumberLiteralExpression{ActualValue: int64(1)},
+				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
+				&NumberLiteralExpression{ActualValue: int64(2)},
+			},
+		},
+		{
+			Expr: "1..a",
+			Expected: []Node{
+				&NumberLiteralExpression{ActualValue: int64(1)},
+				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
+				&IdentifierExpression{Name: "a"},
 			},
 		},
 	}
@@ -722,25 +743,43 @@ func TestParser_ParseIfStatement(t *testing.T) {
 		rootNode.Accept(testingVisitor)
 	}
 }
+
 func TestParser_ParseForStatement(t *testing.T) {
 	tests := []struct {
 		Expr     string
 		Expected []Node
 	}{
-		//		{
-		//			Expr: `
-		//				for(var i = 0; i < 10; i = i + 1) {
-		//				}
-		//`,
-		//			Expected: []Node{
-		//				&IfStatement{},
-		//				&IdentifierExpression{Name: "a"},
-		//				&BinaryExpression{Op: lexer.Token{Literal: "=="}},
-		//				&NumberLiteralExpression{ActualValue: int64(1)},
-		//				&BlockStatement{},
-		//				&BlockStatement{}, // accounting for the then empty block.
-		//			},
-		//		},
+		{
+			Expr: `
+						for k in 0..2 {
+						}
+		`,
+			Expected: []Node{
+				&ForStatement{},
+				&IdentifierExpression{Name: "k"},
+				// TODO: a placeholder identifier should be a singleton to avoid instance bloat.
+				&IdentifierExpression{Name: "__empty__"},
+				&NumberLiteralExpression{ActualValue: int64(0)},
+				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
+				&NumberLiteralExpression{ActualValue: int64(2)},
+				&BlockStatement{},
+			},
+		},
+		{
+			Expr: `
+						for k, v in 0..2 {
+						}
+		`,
+			Expected: []Node{
+				&ForStatement{},
+				&IdentifierExpression{Name: "k"},
+				&IdentifierExpression{Name: "v"},
+				&NumberLiteralExpression{ActualValue: int64(0)},
+				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
+				&NumberLiteralExpression{ActualValue: int64(2)},
+				&BlockStatement{},
+			},
+		},
 	}
 
 	for _, test := range tests {

@@ -25,7 +25,7 @@ type NodeVisitor interface {
 	VisitParenthesisedExpression(ParenthesisedExpression)
 	VisitIdentifierExpression(IdentifierExpression)
 	VisitCallExpression(CallExpression)
-	visitAssignExpression(AssignExpression)
+	VisitAssignExpression(AssignExpression)
 
 	VisitDeclarationStatement(DeclarationStatement)
 	VisitReturnStatement(ReturnStatement)
@@ -278,10 +278,10 @@ func newIfStatement() *IfStatement {
 }
 
 type ForStatement struct {
-	InitBlock           *BlockStatement
-	ConditionExpression Expression
-	IncrementBlock      *BlockStatement
-	Body                *BlockStatement
+	Key   *IdentifierExpression
+	Value *IdentifierExpression
+	Range Expression
+	Body  *BlockStatement
 }
 
 func (f *ForStatement) Literal() string {
@@ -352,7 +352,7 @@ func (a *AssignExpression) Literal() string {
 }
 
 func (a *AssignExpression) Accept(visitor NodeVisitor) {
-	visitor.visitAssignExpression(*a)
+	visitor.VisitAssignExpression(*a)
 }
 
 func (a *AssignExpression) Statement() {

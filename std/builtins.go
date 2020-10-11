@@ -75,8 +75,11 @@ func ToString(object CometObject) *CometStr {
 	case *CometBool:
 		return &CometStr{Value: strconv.FormatBool(n.Value), Size: 4}
 	case *CometInt:
+		// TODO: updates should be made when we have numbers with different bases
 		value := strconv.FormatInt(n.Value, 10)
 		return &CometStr{Value: value, Size: len(value)}
+	case *CometRange:
+		return &CometStr{Value: n.ToString(), Size: len(n.ToString())}
 	case *CometFunc:
 		value := n.ToString()
 		return &CometStr{Value: value, Size: len(value)}

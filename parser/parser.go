@@ -16,16 +16,17 @@ const (
 )
 
 var precedences = map[lexer.TokenType]int{
-	lexer.Plus:  ADD,
-	lexer.Minus: ADD,
-	lexer.Mul:   MUL,
-	lexer.Div:   MUL,
-	lexer.LT:    LOG,
-	lexer.LTE:   LOG,
-	lexer.GT:    LOG,
-	lexer.GTE:   LOG,
-	lexer.EQ:    LOG,
-	lexer.NEQ:   LOG,
+	lexer.Plus:   ADD,
+	lexer.Minus:  ADD,
+	lexer.Mul:    MUL,
+	lexer.Div:    MUL,
+	lexer.LT:     LOG,
+	lexer.LTE:    LOG,
+	lexer.GT:     LOG,
+	lexer.GTE:    LOG,
+	lexer.EQ:     LOG,
+	lexer.NEQ:    LOG,
+	lexer.DotDot: PARENT,
 }
 
 func getPrecedence(token lexer.Token) int {
@@ -123,7 +124,7 @@ func (p *Parser) init() {
 	p.registerPrefixFunc(p.parseStringLiteral, lexer.String)
 
 	p.registerBinaryFunc(p.parseBinaryExpression, lexer.Plus, lexer.Mul, lexer.Minus, lexer.Div,
-		lexer.GT, lexer.GTE, lexer.LT, lexer.LTE, lexer.EQ, lexer.NEQ)
+		lexer.GT, lexer.GTE, lexer.LT, lexer.LTE, lexer.EQ, lexer.NEQ, lexer.DotDot)
 }
 
 // Utility method to enable prefix function registration for given token types.
@@ -176,6 +177,8 @@ func (p *Parser) parseStatement() Statement {
 		return p.parseIfStatement()
 	case lexer.Func:
 		return p.parseFunctionStatement()
+	case lexer.For:
+		return p.parseForStatement()
 	default:
 		return p.parseExpression()
 	}
@@ -390,6 +393,28 @@ func (p *Parser) parseFunctionStatement() Statement {
 
 	funcStatement.Block = p.parseBlockStatement()
 	return funcStatement
+}
+
+func (p *Parser) parseForStatement() Statement {
+	forStatement := &ForStatement{
+		Value: &IdentifierExpression{
+			Name: "__empty__",
+		},
+	}
+	p.expectNext(lexer.Identifier)
+	forStatement.Key = &IdentifierExpression{Name: p.CurrentToken.Literal}
+	// If the next token is a comma, that means that there is a value identifier
+	if p.NextToken.Type == lexer.Comma {
+		p.advance()                    // at comma
+		p.expectNext(lexer.Identifier) // at identifier
+		forStatement.Value = &IdentifierExpression{Name: p.CurrentToken.Literal}
+	}
+	p.expectNext(lexer.In)
+	p.advance()
+	forStatement.Range = p.parseExpression()
+	p.expectNext(lexer.OpenBrace)
+	forStatement.Body = p.parseBlockStatement()
+	return forStatement
 }
 
 func (p *Parser) advanceExpect(expected lexer.TokenType) {

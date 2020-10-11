@@ -34,10 +34,11 @@ func TestLexer_Next(t *testing.T) {
 			NewToken(EQ, "=="),
 			NewToken(NEQ, "!="),
 		}},
-		{`; , .`, []Token{
+		{`; , . ..`, []Token{
 			NewToken(SemiCol, ";"),
 			NewToken(Comma, ","),
 			NewToken(Dot, "."),
+			NewToken(DotDot, ".."),
 		}},
 		{`(){ } [ ] `, []Token{
 			NewToken(OpenParent, "("),
@@ -69,7 +70,7 @@ func TestLexer_Next(t *testing.T) {
 			NewToken(Comma, ","),
 			NewToken(Identifier, "a"),
 		}},
-		{`func new return if else a for var true false`, []Token{
+		{`func new return if else a for var true false in`, []Token{
 			NewToken(Func, "func"),
 			NewToken(New, "new"),
 			NewToken(Return, "return"),
@@ -80,6 +81,7 @@ func TestLexer_Next(t *testing.T) {
 			NewToken(Var, "var"),
 			NewToken(True, "true"),
 			NewToken(False, "false"),
+			NewToken(In, "in"),
 		}},
 		{`func main(a, b) {
 	var a = a[0]

@@ -14,6 +14,7 @@ const (
 	StrType       = "STR"
 	FuncType      = "FUNCTION"
 	ErrorType     = "ERROR"
+	RangeType     = "RANGE"
 	ReturnWrapper = "ReturnWrapper"
 	Nop           = "NOP"
 )
@@ -112,6 +113,19 @@ func (c *CometFunc) Type() CometType {
 func (c *CometFunc) ToString() string {
 	// TODO(chermehdi): better ToString() representation for functions.
 	return fmt.Sprintf("CometFunc")
+}
+
+type CometRange struct {
+	From CometInt
+	To   CometInt
+}
+
+func (c *CometRange) Type() CometType {
+	return RangeType
+}
+
+func (c *CometRange) ToString() string {
+	return fmt.Sprintf("CometRange(%d, %d)", c.From.Value, c.To.Value)
 }
 
 func CreateError(s string, params ...interface{}) CometObject {
