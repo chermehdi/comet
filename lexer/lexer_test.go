@@ -15,29 +15,37 @@ func TestLexer_Next(t *testing.T) {
 			NewToken(Plus, "+"),
 			NewToken(Number, "2"),
 		}},
-		{`+ / -  *+`, []Token{
+		{`+ / -  *+ & | ^`, []Token{
 			NewToken(Plus, "+"),
 			NewToken(Div, "/"),
 			NewToken(Minus, "-"),
 			NewToken(Mul, "*"),
 			NewToken(Plus, "+"),
+			NewToken(AND, "&"),
+			NewToken(OR, "|"),
+			NewToken(XOR, "^"),
 		}},
-		{`< > = !`, []Token{
+		{`< > = ! >> <<`, []Token{
 			NewToken(LT, "<"),
 			NewToken(GT, ">"),
 			NewToken(Assign, "="),
 			NewToken(Bang, "!"),
+			NewToken(RSHIFT, ">>"),
+			NewToken(LSHIFT, "<<"),
 		}},
-		{`<= >= == !=`, []Token{
+		{`<= >= == != && ||`, []Token{
 			NewToken(LTE, "<="),
 			NewToken(GTE, ">="),
 			NewToken(EQ, "=="),
 			NewToken(NEQ, "!="),
+			NewToken(ANDAND, "&&"),
+			NewToken(OROR, "||"),
 		}},
-		{`; , .`, []Token{
+		{`; , . ..`, []Token{
 			NewToken(SemiCol, ";"),
 			NewToken(Comma, ","),
 			NewToken(Dot, "."),
+			NewToken(DotDot, ".."),
 		}},
 		{`(){ } [ ] `, []Token{
 			NewToken(OpenParent, "("),
@@ -69,7 +77,7 @@ func TestLexer_Next(t *testing.T) {
 			NewToken(Comma, ","),
 			NewToken(Identifier, "a"),
 		}},
-		{`func new return if else a for var true false`, []Token{
+		{`func new return if else a for var true false in`, []Token{
 			NewToken(Func, "func"),
 			NewToken(New, "new"),
 			NewToken(Return, "return"),
@@ -80,6 +88,7 @@ func TestLexer_Next(t *testing.T) {
 			NewToken(Var, "var"),
 			NewToken(True, "true"),
 			NewToken(False, "false"),
+			NewToken(In, "in"),
 		}},
 		{`func main(a, b) {
 	var a = a[0]
@@ -159,7 +168,8 @@ func TestLexer_Next(t *testing.T) {
 		assert.Equal(t, len(test.ExpectedTokens), len(gotTokens))
 
 		for i, token := range test.ExpectedTokens {
-			assert.Equal(t, token, gotTokens[i])
+			assert.Equal(t, token.Type, gotTokens[i].Type)
+			assert.Equal(t, token.Literal, gotTokens[i].Literal)
 		}
 	}
 }

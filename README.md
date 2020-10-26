@@ -166,6 +166,22 @@ LETTER: [a-zA-Z];
 STRING: '"' ~('\r' | '\n' | '"')* '"' ;
 ```
 
+## Tasks
+
+These are the list of the tasks that I think should be done before having the first release:
+
+- [x] Add variable declarations
+- [x] Add conditionals
+- [ ] Add Proper scoping
+- [ ] Add support for loops 
+- [ ] Add Arrays support
+- [ ] Add Comments support
+- [ ] Add Hash support
+- [ ] Add import modules support
+- [ ] Add testing framework 
+- [ ] Add build system
+- [ ] Add a standard library
+
 ## Contribution
 
 - Feel free to submit new issues, or pull requests.

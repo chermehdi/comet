@@ -15,18 +15,16 @@ type TestingVisitor struct {
 	t        *testing.T
 }
 
+func (t *TestingVisitor) VisitExpression(Expression) {}
+
+func (t *TestingVisitor) VisitStatement(Statement) {}
+
 func (t *TestingVisitor) VisitStringLiteral(literal StringLiteral) {
 	currentNode := t.expected[t.ptr]
 	currentStringLiteral, ok := currentNode.(*StringLiteral)
 	assert.True(t.t, ok)
 	assert.Equal(t.t, currentStringLiteral.Value, literal.Value)
 	t.ptr++
-}
-
-func (t *TestingVisitor) VisitExpression(Expression) {
-}
-
-func (t *TestingVisitor) VisitStatement(Statement) {
 }
 
 func (t *TestingVisitor) VisitRootNode(node RootNode) {
@@ -42,7 +40,12 @@ func (t *TestingVisitor) VisitBinaryExpression(expression BinaryExpression) {
 }
 
 func (t *TestingVisitor) VisitPrefixExpression(expression PrefixExpression) {
-	panic("implement me")
+	currentNode := t.expected[t.ptr]
+	prefExpected, ok := currentNode.(*PrefixExpression)
+	assert.True(t.t, ok)
+	assert.Equal(t.t, prefExpected.Op.Literal, expression.Op.Literal)
+	t.ptr++
+	expression.Right.Accept(t)
 }
 
 func (t *TestingVisitor) VisitNumberLiteral(expression NumberLiteralExpression) {
@@ -81,6 +84,14 @@ func (t *TestingVisitor) VisitIdentifierExpression(expression IdentifierExpressi
 	t.ptr++
 }
 
+func (t *TestingVisitor) VisitAssignExpression(assign AssignExpression) {
+	currentNode := t.expected[t.ptr]
+	currentAssignExpression, ok := currentNode.(*AssignExpression)
+	assert.True(t.t, ok)
+	assert.Equal(t.t, currentAssignExpression.VarName, assign.VarName)
+	t.ptr++
+}
+
 func (t *TestingVisitor) VisitDeclarationStatement(statement DeclarationStatement) {
 	currentNode := t.expected[t.ptr]
 	currentDecStatement, ok := currentNode.(*DeclarationStatement)
@@ -116,6 +127,17 @@ func (t *TestingVisitor) VisitIfStatement(statement IfStatement) {
 	statement.Test.Accept(t)
 	statement.Then.Accept(t)
 	statement.Else.Accept(t)
+}
+
+func (t *TestingVisitor) VisitForStatement(statement ForStatement) {
+	currentNode := t.expected[t.ptr]
+	_, ok := currentNode.(*ForStatement)
+	assert.True(t.t, ok)
+	t.ptr++
+	statement.Key.Accept(t)
+	statement.Value.Accept(t)
+	statement.Range.Accept(t)
+	statement.Body.Accept(t)
 }
 
 func (t *TestingVisitor) VisitFunctionStatement(statement FunctionStatement) {
@@ -218,6 +240,22 @@ func TestParser_Parse_SimpleMathExpressions(t *testing.T) {
 				&NumberLiteralExpression{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
 				&NumberLiteralExpression{ActualValue: int64(2)},
+			},
+		},
+		{
+			Expr: "1..2",
+			Expected: []Node{
+				&NumberLiteralExpression{ActualValue: int64(1)},
+				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
+				&NumberLiteralExpression{ActualValue: int64(2)},
+			},
+		},
+		{
+			Expr: "1..a",
+			Expected: []Node{
+				&NumberLiteralExpression{ActualValue: int64(1)},
+				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
+				&IdentifierExpression{Name: "a"},
 			},
 		},
 	}
@@ -390,86 +428,140 @@ func TestParser_ParseBooleans(t *testing.T) {
 	}
 }
 
-func TestParser_ParseComparisonOperators(t *testing.T) {
+func TestParser_ParsePrefixExpression(t *testing.T) {
 	tests := []struct {
 		Expr     string
 		Expected []Node
 	}{
 		{
-			Expr: "1 < 2",
+			Expr: "-1",
 			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "<"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&PrefixExpression{Op: lexer.Token{Literal: "-"}},
+				&NumberLiteralExpression{ActualValue: 1},
 			},
 		},
 		{
-			Expr: "1 <= 2",
+			Expr: "!true",
 			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "<="}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&PrefixExpression{Op: lexer.Token{Literal: "!"}},
+				&BooleanLiteral{ActualValue: true},
 			},
 		},
+	}
+
+	for _, test := range tests {
+		parser := New(test.Expr)
+		rootNode := parser.Parse()
+		assert.NotNil(t, rootNode)
+		testingVisitor := &TestingVisitor{
+			expected: test.Expected,
+			ptr:      0,
+			t:        t,
+		}
+		rootNode.Accept(testingVisitor)
+	}
+}
+
+func TestParser_ParsePrefixOperators(t *testing.T) {
+
+	tests := []struct {
+		Expr     string
+		Expected []Node
+	}{
 		{
-			Expr: "1 > 2",
+			Expr: `{
+	var a = 1 + 2
+	return a
+}`,
 			Expected: []Node{
+				&BlockStatement{},
+				&DeclarationStatement{
+					Identifier: lexer.Token{Literal: "a"},
+				},
 				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: ">"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
-			},
-		},
-		{
-			Expr: "1 >= 2",
-			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: ">="}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
-			},
-		},
-		{
-			Expr: "1 == 2",
-			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "=="}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
-			},
-		},
-		{
-			Expr: "1 != 2",
-			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "!="}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
-			},
-		},
-		{
-			Expr: "1 > 2 + 1",
-			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: ">"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteralExpression{ActualValue: int64(2)},
+				&ReturnStatement{},
+				&IdentifierExpression{Name: "a"},
 			},
 		},
 		{
-			Expr: "1 < 2 + 1",
+			Expr: `{}`,
 			Expected: []Node{
+				&BlockStatement{},
+			},
+		},
+		{
+			Expr: `{}
+			var a = 1 + 2`,
+			Expected: []Node{
+				&BlockStatement{},
+				&DeclarationStatement{
+					Identifier: lexer.Token{Literal: "a"},
+				},
 				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "<"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteralExpression{ActualValue: int64(2)},
 			},
 		},
 		{
-			Expr: "(1 < 2) + 1",
+			Expr: `{
+				{
+					var a = 1 + 2
+				}
+				{
+					var b = 1 + 2
+				}
+				return a
+			}`,
 			Expected: []Node{
-				&ParenthesisedExpression{},
+				&BlockStatement{},
+				&BlockStatement{},
+				&DeclarationStatement{
+					Identifier: lexer.Token{Literal: "a"},
+				},
 				&NumberLiteralExpression{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "<"}},
+				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
 				&NumberLiteralExpression{ActualValue: int64(2)},
+				&BlockStatement{},
+				&DeclarationStatement{
+					Identifier: lexer.Token{Literal: "b"},
+				},
+				&NumberLiteralExpression{ActualValue: int64(1)},
+				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&NumberLiteralExpression{ActualValue: int64(2)},
+				&ReturnStatement{},
+				&IdentifierExpression{Name: "a"},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		parser := New(test.Expr)
+		rootNode := parser.Parse()
+		assert.NotNil(t, rootNode)
+		testingVisitor := &TestingVisitor{
+			expected: test.Expected,
+			ptr:      0,
+			t:        t,
+		}
+		rootNode.Accept(testingVisitor)
+	}
+}
+
+func TestParser_ParseAssignExpression(t *testing.T) {
+
+	tests := []struct {
+		Expr     string
+		Expected []Node
+	}{
+		{
+			Expr: `
+	a = 10 + 1
+`,
+			Expected: []Node{
+				&AssignExpression{VarName: "a"},
+				&NumberLiteralExpression{ActualValue: int64(10)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
 				&NumberLiteralExpression{ActualValue: int64(1)},
 			},
@@ -652,6 +744,56 @@ func TestParser_ParseIfStatement(t *testing.T) {
 	}
 }
 
+func TestParser_ParseForStatement(t *testing.T) {
+	tests := []struct {
+		Expr     string
+		Expected []Node
+	}{
+		{
+			Expr: `
+						for k in 0..2 {
+						}
+		`,
+			Expected: []Node{
+				&ForStatement{},
+				&IdentifierExpression{Name: "k"},
+				// TODO: a placeholder identifier should be a singleton to avoid instance bloat.
+				&IdentifierExpression{Name: "__empty__"},
+				&NumberLiteralExpression{ActualValue: int64(0)},
+				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
+				&NumberLiteralExpression{ActualValue: int64(2)},
+				&BlockStatement{},
+			},
+		},
+		{
+			Expr: `
+						for k, v in 0..2 {
+						}
+		`,
+			Expected: []Node{
+				&ForStatement{},
+				&IdentifierExpression{Name: "k"},
+				&IdentifierExpression{Name: "v"},
+				&NumberLiteralExpression{ActualValue: int64(0)},
+				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
+				&NumberLiteralExpression{ActualValue: int64(2)},
+				&BlockStatement{},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		parser := New(test.Expr)
+		rootNode := parser.Parse()
+		assert.NotNil(t, rootNode)
+		testingVisitor := &TestingVisitor{
+			expected: test.Expected,
+			ptr:      0,
+			t:        t,
+		}
+		rootNode.Accept(testingVisitor)
+	}
+}
 func TestParser_Parse_ParseFunctionDeclaration(t *testing.T) {
 	tests := []struct {
 		Expr     string
@@ -718,6 +860,13 @@ func TestParser_Parse_ParseFunctionDeclaration(t *testing.T) {
 		}
 		rootNode.Accept(testingVisitor)
 	}
+}
+
+func TestParser_Parse_ShouldFailWrongFunctionCall(t *testing.T) {
+	text := `func foo() {`
+	parser := New(text)
+	parser.Parse()
+	assert.True(t, parser.Errors.HasAny())
 }
 
 func TestParser_Parse_ParseFunctionCall(t *testing.T) {

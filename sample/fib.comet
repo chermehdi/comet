@@ -1,0 +1,22 @@
+func fibo(n) {
+    if n <= 1 {
+        return n
+    }
+    return fibo(n - 1) + fibo(n - 2)
+}
+
+func iterative_fib(n) {
+  var res = 0
+  var last = 1
+  var blast = 0
+  for i in 2..n {
+    res = last + blast
+    blast = last
+    last = res
+  }
+  return res
+}
+
+println(iterative_fib(10))
+println(fibo(10))
+

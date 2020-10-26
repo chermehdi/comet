@@ -25,12 +25,14 @@ type NodeVisitor interface {
 	VisitParenthesisedExpression(ParenthesisedExpression)
 	VisitIdentifierExpression(IdentifierExpression)
 	VisitCallExpression(CallExpression)
+	VisitAssignExpression(AssignExpression)
 
 	VisitDeclarationStatement(DeclarationStatement)
 	VisitReturnStatement(ReturnStatement)
 	VisitBlockStatement(BlockStatement)
 	VisitIfStatement(IfStatement)
 	VisitFunctionStatement(FunctionStatement)
+	VisitForStatement(ForStatement)
 }
 
 type Node interface {
@@ -275,6 +277,25 @@ func newIfStatement() *IfStatement {
 	}
 }
 
+type ForStatement struct {
+	Key   *IdentifierExpression
+	Value *IdentifierExpression
+	Range Expression
+	Body  *BlockStatement
+}
+
+func (f *ForStatement) Literal() string {
+	panic("implement me")
+}
+
+func (f *ForStatement) Accept(visitor NodeVisitor) {
+	visitor.VisitForStatement(*f)
+}
+
+func (f *ForStatement) Statement() {
+	panic("implement me")
+}
+
 type FunctionStatement struct {
 	Name       string
 	Parameters []*IdentifierExpression
@@ -318,6 +339,27 @@ func (c *CallExpression) Statement() {
 }
 
 func (c *CallExpression) Expr() {
+	panic("implement me")
+}
+
+type AssignExpression struct {
+	VarName string
+	Value   Expression
+}
+
+func (a *AssignExpression) Literal() string {
+	panic("implement me")
+}
+
+func (a *AssignExpression) Accept(visitor NodeVisitor) {
+	visitor.VisitAssignExpression(*a)
+}
+
+func (a *AssignExpression) Statement() {
+	panic("implement me")
+}
+
+func (a *AssignExpression) Expr() {
 	panic("implement me")
 }
 
