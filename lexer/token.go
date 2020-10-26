@@ -3,8 +3,10 @@ package lexer
 type TokenType string
 
 type Token struct {
-	Type    TokenType
-	Literal string
+	Type         TokenType
+	Literal      string
+	LineNumber   int
+	ColumnNumber int
 }
 
 // Creates a new token from the given literal and type.
@@ -12,6 +14,18 @@ func NewToken(tokenType TokenType, literal string) Token {
 	return Token{
 		tokenType,
 		literal,
+		0,
+		0,
+	}
+}
+
+// Creates a new token from the given literal and type.
+func NewTokenWithMeta(tokenType TokenType, literal string, line, column int) Token {
+	return Token{
+		tokenType,
+		literal,
+		line,
+		column,
 	}
 }
 

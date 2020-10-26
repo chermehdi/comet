@@ -10,6 +10,8 @@ type Lexer struct {
 	pos       int
 	current   byte
 	inputSize int
+	line      int
+	column    int
 }
 
 // Creates an initializes a new lexer from the given input source.
@@ -19,6 +21,8 @@ func NewLexer(src string) *Lexer {
 		pos:       0,
 		current:   src[0],
 		inputSize: len(src),
+		line:      1,
+		column:    1,
 	}
 }
 
@@ -27,90 +31,90 @@ func (l *Lexer) Next() Token {
 	l.ignoreWhiteSpace()
 	switch l.current {
 	case '+':
-		result = NewToken(Plus, "+")
+		result = NewTokenWithMeta(Plus, "+", l.line, l.column)
 	case '-':
-		result = NewToken(Minus, "-")
+		result = NewTokenWithMeta(Minus, "-", l.line, l.column)
 	case '*':
-		result = NewToken(Mul, "*")
+		result = NewTokenWithMeta(Mul, "*", l.line, l.column)
 	case '/':
-		result = NewToken(Div, "/")
+		result = NewTokenWithMeta(Div, "/", l.line, l.column)
 	case '^':
-		result = NewToken(XOR, "^")
+		result = NewTokenWithMeta(XOR, "^", l.line, l.column)
 	case '~':
-		result = NewToken(NOT, "~")
+		result = NewTokenWithMeta(NOT, "~", l.line, l.column)
 	case '>':
 		if l.peek() == '=' {
 			l.advance()
-			result = NewToken(GTE, ">=")
+			result = NewTokenWithMeta(GTE, ">=", l.line, l.column)
 		} else if l.peek() == '>' {
 			l.advance()
-			result = NewToken(RSHIFT, ">>")
+			result = NewTokenWithMeta(RSHIFT, ">>", l.line, l.column)
 		} else {
-			result = NewToken(GT, ">")
+			result = NewTokenWithMeta(GT, ">", l.line, l.column)
 		}
 	case '<':
 		if l.peek() == '=' {
 			l.advance()
-			result = NewToken(LTE, "<=")
+			result = NewTokenWithMeta(LTE, "<=", l.line, l.column)
 		} else if l.peek() == '<' {
 			l.advance()
-			result = NewToken(LSHIFT, "<<")
+			result = NewTokenWithMeta(LSHIFT, "<<", l.line, l.column)
 		} else {
-			result = NewToken(LT, "<")
+			result = NewTokenWithMeta(LT, "<", l.line, l.column)
 		}
 	case '=':
 		if l.peek() == '=' {
 			l.advance()
-			result = NewToken(EQ, "==")
+			result = NewTokenWithMeta(EQ, "==", l.line, l.column)
 		} else {
-			result = NewToken(Assign, "=")
+			result = NewTokenWithMeta(Assign, "=", l.line, l.column)
 		}
 	case '!':
 		if l.peek() == '=' {
 			l.advance()
-			result = NewToken(NEQ, "!=")
+			result = NewTokenWithMeta(NEQ, "!=", l.line, l.column)
 		} else {
-			result = NewToken(Bang, "!")
+			result = NewTokenWithMeta(Bang, "!", l.line, l.column)
 		}
 	case '&':
 		if l.peek() == '&' {
 			l.advance()
-			result = NewToken(ANDAND, "&&")
+			result = NewTokenWithMeta(ANDAND, "&&", l.line, l.column)
 		} else {
-			result = NewToken(AND, "&")
+			result = NewTokenWithMeta(AND, "&", l.line, l.column)
 		}
 	case '|':
 		if l.peek() == '|' {
 			l.advance()
-			result = NewToken(OROR, "||")
+			result = NewTokenWithMeta(OROR, "||", l.line, l.column)
 		} else {
-			result = NewToken(OR, "|")
+			result = NewTokenWithMeta(OR, "|", l.line, l.column)
 		}
 	case '(':
-		result = NewToken(OpenParent, "(")
+		result = NewTokenWithMeta(OpenParent, "(", l.line, l.column)
 	case ')':
-		result = NewToken(CloseParent, ")")
+		result = NewTokenWithMeta(CloseParent, ")", l.line, l.column)
 	case '[':
-		result = NewToken(OpenBracket, "[")
+		result = NewTokenWithMeta(OpenBracket, "[", l.line, l.column)
 	case ']':
-		result = NewToken(CloseBracket, "]")
+		result = NewTokenWithMeta(CloseBracket, "]", l.line, l.column)
 	case '{':
-		result = NewToken(OpenBrace, "{")
+		result = NewTokenWithMeta(OpenBrace, "{", l.line, l.column)
 	case '}':
-		result = NewToken(CloseBrace, "}")
+		result = NewTokenWithMeta(CloseBrace, "}", l.line, l.column)
 	case '.':
 		if l.peek() == '.' {
 			l.advance()
-			result = NewToken(DotDot, "..")
+			result = NewTokenWithMeta(DotDot, "..", l.line, l.column)
 		} else {
-			result = NewToken(Dot, ".")
+			result = NewTokenWithMeta(Dot, ".", l.line, l.column)
 		}
 	case ';':
-		result = NewToken(SemiCol, ";")
+		result = NewTokenWithMeta(SemiCol, ";", l.line, l.column)
 	case ',':
-		result = NewToken(Comma, ",")
+		result = NewTokenWithMeta(Comma, ",", l.line, l.column)
 	case 0:
-		result = NewToken(EOF, "EOF")
+		result = NewTokenWithMeta(EOF, "EOF", l.line, l.column)
 	case '"':
 		result = l.readString()
 	default:
@@ -128,12 +132,17 @@ func (l *Lexer) Next() Token {
 // Whitespace is anything of '\n' '\r' ' ' '\t'
 func (l *Lexer) ignoreWhiteSpace() {
 	for isWhiteSpace(l.current) {
+		if l.current == '\n' {
+			l.line++
+			l.column = 1
+		}
 		l.advance()
 	}
 }
 
 func (l *Lexer) advance() {
 	l.pos += 1
+	l.column += 1
 	if l.pos < l.inputSize {
 		l.current = l.src[l.pos]
 	} else {
@@ -179,7 +188,7 @@ func (l *Lexer) readNumber() Token {
 		}
 		l.advance()
 	}
-	return NewToken(Number, l.src[start:l.pos+1])
+	return NewTokenWithMeta(Number, l.src[start:l.pos+1], l.line, l.column)
 }
 
 func (l *Lexer) readString() Token {
@@ -195,7 +204,7 @@ func (l *Lexer) readString() Token {
 			panic(fmt.Sprint("Reached the end of line or end of input without closing the string quote"))
 		}
 	}
-	return NewToken(String, l.src[start:l.pos])
+	return NewTokenWithMeta(String, l.src[start:l.pos], l.line, l.column)
 }
 
 func isWhiteSpace(c byte) bool {

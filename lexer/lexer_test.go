@@ -168,7 +168,8 @@ func TestLexer_Next(t *testing.T) {
 		assert.Equal(t, len(test.ExpectedTokens), len(gotTokens))
 
 		for i, token := range test.ExpectedTokens {
-			assert.Equal(t, token, gotTokens[i])
+			assert.Equal(t, token.Type, gotTokens[i].Type)
+			assert.Equal(t, token.Literal, gotTokens[i].Literal)
 		}
 	}
 }
