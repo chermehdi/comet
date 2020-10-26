@@ -504,6 +504,35 @@ func TestEvaluator_Eval_FunctionCallTest(t *testing.T) {
 	}
 }
 
+func TestEvaluator_Eval_EvaluateForStatement(t *testing.T) {
+	tests := []struct {
+		Src        string
+		AssertFunc func(*Evaluator)
+	}{
+		{
+			Src: `	
+				var a = 10
+				for i in 0..2 { 
+                  for j in 0..2 {
+					a = a + i * j
+                  }
+				}
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				a := assertFoundInScope(t, evaluator, "a", std.IntType)
+				value := a.(*std.CometInt)
+				assert.Equal(t, int64(19), value.Value)
+			},
+		},
+	}
+	evaluator := NewEvaluator()
+	for _, test := range tests {
+		rootNode := parseOrDie(test.Src)
+		evaluator.Eval(rootNode)
+		test.AssertFunc(evaluator)
+	}
+}
+
 func assertError(t *testing.T, v std.CometObject, ExpectedErrorMsg string) {
 	err, ok := v.(*std.CometError)
 	assert.True(t, ok)

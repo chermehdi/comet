@@ -59,11 +59,24 @@ func (sc *Scope) Lookup(varName string) (std.CometObject, bool) {
 }
 
 // Stores the object and binds it to the given varName.
-// The function will return true if this is overriding another variable with the same name in the current Scope.
+// The function will return true if the assignment of the variable has been done successfully
+// returning false from this function implies that the variable has not been declared and should
+// be handled appropriately.
 func (sc *Scope) Store(varName string, obj std.CometObject) bool {
-	_, has := sc.Variables[varName]
+	_, ok := sc.Variables[varName]
+	if ok {
+		sc.Variables[varName] = obj
+		return true
+	}
+	if sc.Parent != nil {
+		return sc.Parent.Store(varName, obj)
+	}
+	return false
+}
+
+// This function will create the symbol reference in the local scope.
+func (sc *Scope) Declare(varName string, obj std.CometObject) {
 	sc.Variables[varName] = obj
-	return has
 }
 
 func (sc *Scope) Clear(name string) {
@@ -257,7 +270,7 @@ func (ev *Evaluator) evalDeclareStatement(n *parser.DeclarationStatement) std.Co
 	}
 	// TODO(chermehdi): add a shadowing diagnostic message if the store is overriding
 	// an existing variable
-	ev.Scope.Store(n.Identifier.Literal, value)
+	ev.Scope.Declare(n.Identifier.Literal, value)
 	return std.NopInstance
 }
 
@@ -274,7 +287,7 @@ func (ev *Evaluator) registerFunc(n *parser.FunctionStatement) std.CometObject {
 		Params: n.Parameters,
 		Body:   n.Block,
 	}
-	ev.Scope.Store(n.Name, function)
+	ev.Scope.Declare(n.Name, function)
 	return function
 }
 
@@ -330,8 +343,8 @@ func (ev *Evaluator) evalForStatement(n *parser.ForStatement) std.CometObject {
 		curScope := NewScope(oldScope)
 		ev.Scope = curScope
 		for i := rangeObj.From.Value; i <= rangeObj.To.Value; i++ {
-			ev.Scope.Store(n.Key.Name, &std.CometInt{Value: i})
-			ev.Scope.Store(n.Value.Name, &std.CometInt{Value: i})
+			ev.Scope.Declare(n.Key.Name, &std.CometInt{Value: i})
+			ev.Scope.Declare(n.Value.Name, &std.CometInt{Value: i})
 			ev.Eval(n.Body)
 		}
 		ev.Scope.Clear(n.Key.Name)
