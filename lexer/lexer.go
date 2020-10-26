@@ -34,10 +34,17 @@ func (l *Lexer) Next() Token {
 		result = NewToken(Mul, "*")
 	case '/':
 		result = NewToken(Div, "/")
+	case '^':
+		result = NewToken(XOR, "^")
+	case '~':
+		result = NewToken(NOT, "~")
 	case '>':
 		if l.peek() == '=' {
 			l.advance()
 			result = NewToken(GTE, ">=")
+		} else if l.peek() == '>' {
+			l.advance()
+			result = NewToken(RSHIFT, ">>")
 		} else {
 			result = NewToken(GT, ">")
 		}
@@ -45,6 +52,9 @@ func (l *Lexer) Next() Token {
 		if l.peek() == '=' {
 			l.advance()
 			result = NewToken(LTE, "<=")
+		} else if l.peek() == '<' {
+			l.advance()
+			result = NewToken(LSHIFT, "<<")
 		} else {
 			result = NewToken(LT, "<")
 		}
@@ -61,6 +71,20 @@ func (l *Lexer) Next() Token {
 			result = NewToken(NEQ, "!=")
 		} else {
 			result = NewToken(Bang, "!")
+		}
+	case '&':
+		if l.peek() == '&' {
+			l.advance()
+			result = NewToken(ANDAND, "&&")
+		} else {
+			result = NewToken(AND, "&")
+		}
+	case '|':
+		if l.peek() == '|' {
+			l.advance()
+			result = NewToken(OROR, "||")
+		} else {
+			result = NewToken(OR, "|")
 		}
 	case '(':
 		result = NewToken(OpenParent, "(")

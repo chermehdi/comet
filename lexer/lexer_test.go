@@ -15,24 +15,31 @@ func TestLexer_Next(t *testing.T) {
 			NewToken(Plus, "+"),
 			NewToken(Number, "2"),
 		}},
-		{`+ / -  *+`, []Token{
+		{`+ / -  *+ & | ^`, []Token{
 			NewToken(Plus, "+"),
 			NewToken(Div, "/"),
 			NewToken(Minus, "-"),
 			NewToken(Mul, "*"),
 			NewToken(Plus, "+"),
+			NewToken(AND, "&"),
+			NewToken(OR, "|"),
+			NewToken(XOR, "^"),
 		}},
-		{`< > = !`, []Token{
+		{`< > = ! >> <<`, []Token{
 			NewToken(LT, "<"),
 			NewToken(GT, ">"),
 			NewToken(Assign, "="),
 			NewToken(Bang, "!"),
+			NewToken(RSHIFT, ">>"),
+			NewToken(LSHIFT, "<<"),
 		}},
-		{`<= >= == !=`, []Token{
+		{`<= >= == != && ||`, []Token{
 			NewToken(LTE, "<="),
 			NewToken(GTE, ">="),
 			NewToken(EQ, "=="),
 			NewToken(NEQ, "!="),
+			NewToken(ANDAND, "&&"),
+			NewToken(OROR, "||"),
 		}},
 		{`; , . ..`, []Token{
 			NewToken(SemiCol, ";"),

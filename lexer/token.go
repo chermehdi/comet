@@ -36,6 +36,17 @@ const (
 	EQ     = "=="
 	NEQ    = "!="
 
+	// Bitwise operators
+	RSHIFT = ">>"
+	LSHIFT = "<<"
+	OR     = "|"
+	AND    = "&"
+	XOR    = "^"
+	NOT    = "~"
+
+	OROR   = "||"
+	ANDAND = "&&"
+
 	// Structural tokens
 	OpenParent   = "("
 	CloseParent  = ")"
