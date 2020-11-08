@@ -35,7 +35,12 @@ var Builtins = []*Builtin{
 				transArgs = append(transArgs, extractPrimitive(args[i]))
 			}
 			format := args[0].(*CometStr)
-			fmt.Printf(format.Value, transArgs)
+
+			if len(transArgs) > 0 {
+				fmt.Printf(format.Value, transArgs)
+			} else {
+				fmt.Printf(format.Value)
+			}
 			return NopInstance
 		},
 	},
