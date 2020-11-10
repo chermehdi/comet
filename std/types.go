@@ -1,6 +1,7 @@
 package std
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/chermehdi/comet/parser"
 )
@@ -78,7 +79,16 @@ func (c *CometArray) Type() CometType {
 }
 
 func (c *CometArray) ToString() string {
-	panic("implement me")
+	var buf bytes.Buffer
+	buf.WriteString("[")
+	for i, obj := range c.Values {
+		if i > 0 {
+			buf.WriteString(", ")
+		}
+		buf.WriteString(obj.ToString())
+	}
+	buf.WriteString("]")
+	return buf.String()
 }
 
 type CometError struct {
