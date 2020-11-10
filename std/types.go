@@ -12,6 +12,7 @@ const (
 	IntType       = "INTEGER"
 	BoolType      = "BOOLEAN"
 	StrType       = "STR"
+	ArrayType     = "ARRAY"
 	FuncType      = "FUNCTION"
 	ErrorType     = "ERROR"
 	RangeType     = "RANGE"
@@ -65,6 +66,19 @@ func (c *CometStr) Type() CometType {
 
 func (c *CometStr) ToString() string {
 	return fmt.Sprintf(`CometStr("%s")`, c.Value)
+}
+
+type CometArray struct {
+	Length int
+	Values []CometObject
+}
+
+func (c *CometArray) Type() CometType {
+	return ArrayType
+}
+
+func (c *CometArray) ToString() string {
+	panic("implement me")
 }
 
 type CometError struct {
