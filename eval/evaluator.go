@@ -93,7 +93,7 @@ func (ev *Evaluator) Eval(node parser.Node) std.CometObject {
 		return ev.evalRootNode(n.Statements)
 	case *parser.PrefixExpression:
 		return ev.evalPrefixExpression(n)
-	case *parser.NumberLiteralExpression:
+	case *parser.NumberLiteral:
 		return &std.CometInt{n.ActualValue}
 	case *parser.BooleanLiteral:
 		if n.ActualValue {
@@ -103,6 +103,8 @@ func (ev *Evaluator) Eval(node parser.Node) std.CometObject {
 		}
 	case *parser.StringLiteral:
 		return &std.CometStr{Value: n.Value, Size: len(n.Value)}
+	case *parser.ArrayLiteral:
+		return ev.evalArrayElements(n)
 	case *parser.BinaryExpression:
 		return ev.evalBinaryExpression(n)
 	case *parser.ParenthesisedExpression:
@@ -354,6 +356,20 @@ func (ev *Evaluator) evalForStatement(n *parser.ForStatement) std.CometObject {
 	default:
 		panic("not implemented yet!!")
 	}
+}
+
+func (ev *Evaluator) evalArrayElements(arr *parser.ArrayLiteral) std.CometObject {
+	array := &std.CometArray{
+		Length: len(arr.Elements),
+	}
+	arrayContent := make([]std.CometObject, array.Length)
+
+	for i, expression := range arr.Elements {
+		arrayContent[i] = ev.Eval(expression)
+	}
+
+	array.Values = arrayContent
+	return array
 }
 
 func applyOp(op lexer.TokenType, left std.CometObject, right std.CometObject) std.CometObject {

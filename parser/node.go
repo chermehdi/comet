@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/chermehdi/comet/lexer"
 )
 
@@ -19,9 +20,10 @@ type NodeVisitor interface {
 	VisitRootNode(RootNode)
 	VisitBinaryExpression(BinaryExpression)
 	VisitPrefixExpression(PrefixExpression)
-	VisitNumberLiteral(NumberLiteralExpression)
+	VisitNumberLiteral(NumberLiteral)
 	VisitBooleanLiteral(BooleanLiteral)
 	VisitStringLiteral(StringLiteral)
+	VisitArrayLiteral(ArrayLiteral)
 	VisitParenthesisedExpression(ParenthesisedExpression)
 	VisitIdentifierExpression(IdentifierExpression)
 	VisitCallExpression(CallExpression)
@@ -69,26 +71,6 @@ func (r *RootNode) Expr() {
 
 func (r *RootNode) Literal() string {
 	return ""
-}
-
-type NumberLiteralExpression struct {
-	ActualValue int64
-}
-
-func (n *NumberLiteralExpression) Accept(visitor NodeVisitor) {
-	visitor.VisitNumberLiteral(*n)
-}
-
-func (n *NumberLiteralExpression) Literal() string {
-	panic("implement me")
-}
-
-func (n *NumberLiteralExpression) Statement() {
-	panic("implement me")
-}
-
-func (n *NumberLiteralExpression) Expr() {
-	panic("implement me")
 }
 
 type BinaryExpression struct {
@@ -363,6 +345,26 @@ func (a *AssignExpression) Expr() {
 	panic("implement me")
 }
 
+type NumberLiteral struct {
+	ActualValue int64
+}
+
+func (n *NumberLiteral) Accept(visitor NodeVisitor) {
+	visitor.VisitNumberLiteral(*n)
+}
+
+func (n *NumberLiteral) Literal() string {
+	panic("implement me")
+}
+
+func (n *NumberLiteral) Statement() {
+	panic("implement me")
+}
+
+func (n *NumberLiteral) Expr() {
+	panic("implement me")
+}
+
 type StringLiteral struct {
 	Value string
 }
@@ -380,5 +382,25 @@ func (s *StringLiteral) Statement() {
 }
 
 func (s *StringLiteral) Expr() {
+	panic("implement me")
+}
+
+type ArrayLiteral struct {
+	Elements []Expression
+}
+
+func (a *ArrayLiteral) Literal() string {
+	return fmt.Sprintf("ArrayLiteral(%d)", len(a.Elements))
+}
+
+func (a *ArrayLiteral) Accept(visitor NodeVisitor) {
+	visitor.VisitArrayLiteral(*a)
+}
+
+func (a *ArrayLiteral) Statement() {
+	panic("implement me")
+}
+
+func (a *ArrayLiteral) Expr() {
 	panic("implement me")
 }

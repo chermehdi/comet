@@ -533,6 +533,79 @@ func TestEvaluator_Eval_EvaluateForStatement(t *testing.T) {
 	}
 }
 
+func TestEvaluator_Eval_EvaluateArrayDeclaration(t *testing.T) {
+	tests := []struct {
+		Src        string
+		AssertFunc func(*Evaluator)
+	}{
+		{
+			Src: `	
+				var a = []
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				a := assertFoundInScope(t, evaluator, "a", std.ArrayType)
+				array := a.(*std.CometArray)
+				assert.Equal(t, 0, array.Length)
+			},
+		},
+		{
+			Src: `	
+				var a = [1, 2, 3]
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				a := assertFoundInScope(t, evaluator, "a", std.ArrayType)
+				array := a.(*std.CometArray)
+				assert.Equal(t, 3, array.Length)
+
+				assertInteger(t, array.Values[0], 1)
+				assertInteger(t, array.Values[1], 2)
+				assertInteger(t, array.Values[2], 3)
+			},
+		},
+		{
+			Src: `	
+				var a = [[], [1, 2]]
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				a := assertFoundInScope(t, evaluator, "a", std.ArrayType)
+				array := a.(*std.CometArray)
+				assert.Equal(t, 2, array.Length)
+
+				assert.True(t, array.Values[0].Type() == std.ArrayType)
+
+				arrv0 := array.Values[0].(*std.CometArray)
+				assert.Equal(t, 0, arrv0.Length)
+
+				assert.True(t, array.Values[1].Type() == std.ArrayType)
+
+				arrv1 := array.Values[1].(*std.CometArray)
+				assert.Equal(t, 2, arrv1.Length)
+				assertInteger(t, arrv1.Values[0], 1)
+				assertInteger(t, arrv1.Values[1], 2)
+			},
+		},
+		{
+			Src: `	
+				var a = ["comet", "42"]
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				a := assertFoundInScope(t, evaluator, "a", std.ArrayType)
+				array := a.(*std.CometArray)
+				assert.Equal(t, 2, array.Length)
+
+				assertStr(t, array.Values[0], "comet")
+				assertStr(t, array.Values[1], "42")
+			},
+		},
+	}
+	evaluator := NewEvaluator()
+	for _, test := range tests {
+		rootNode := parseOrDie(test.Src)
+		evaluator.Eval(rootNode)
+		test.AssertFunc(evaluator)
+	}
+}
+
 func assertError(t *testing.T, v std.CometObject, ExpectedErrorMsg string) {
 	err, ok := v.(*std.CometError)
 	assert.True(t, ok)
@@ -549,6 +622,12 @@ func assertInteger(t *testing.T, v std.CometObject, expected int64) {
 	integer, ok := v.(*std.CometInt)
 	assert.True(t, ok)
 	assert.Equal(t, expected, integer.Value)
+}
+
+func assertStr(t *testing.T, v std.CometObject, expected string) {
+	str, ok := v.(*std.CometStr)
+	assert.True(t, ok)
+	assert.Equal(t, expected, str.Value)
 }
 
 func assertFoundInScope(t *testing.T, ev *Evaluator, name string, expectedType std.CometType) std.CometObject {

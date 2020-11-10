@@ -1,6 +1,7 @@
 package std
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/chermehdi/comet/parser"
 )
@@ -12,6 +13,7 @@ const (
 	IntType       = "INTEGER"
 	BoolType      = "BOOLEAN"
 	StrType       = "STR"
+	ArrayType     = "ARRAY"
 	FuncType      = "FUNCTION"
 	ErrorType     = "ERROR"
 	RangeType     = "RANGE"
@@ -65,6 +67,28 @@ func (c *CometStr) Type() CometType {
 
 func (c *CometStr) ToString() string {
 	return fmt.Sprintf(`CometStr("%s")`, c.Value)
+}
+
+type CometArray struct {
+	Length int
+	Values []CometObject
+}
+
+func (c *CometArray) Type() CometType {
+	return ArrayType
+}
+
+func (c *CometArray) ToString() string {
+	var buf bytes.Buffer
+	buf.WriteString("[")
+	for i, obj := range c.Values {
+		if i > 0 {
+			buf.WriteString(", ")
+		}
+		buf.WriteString(obj.ToString())
+	}
+	buf.WriteString("]")
+	return buf.String()
 }
 
 type CometError struct {
