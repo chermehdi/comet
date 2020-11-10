@@ -37,7 +37,7 @@ var Builtins = []*Builtin{
 			format := args[0].(*CometStr)
 
 			if len(transArgs) > 0 {
-				fmt.Printf(format.Value, transArgs)
+				fmt.Printf(format.Value, transArgs...)
 			} else {
 				fmt.Printf(format.Value)
 			}
