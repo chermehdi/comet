@@ -76,6 +76,16 @@ func (t *TestingVisitor) assertNumberLiteralNode(expression NumberLiteralExpress
 	t.ptr++
 }
 
+func (t *TestingVisitor) VisitArrayLiteral(array ArrayLiteral) {
+	currentNode := t.expected[t.ptr]
+	_, ok := currentNode.(*ArrayLiteral)
+	assert.True(t.t, ok)
+	t.ptr++
+	for _, el := range array.Elements {
+		el.Accept(t)
+	}
+}
+
 func (t *TestingVisitor) VisitIdentifierExpression(expression IdentifierExpression) {
 	currentNode := t.expected[t.ptr]
 	currentIdentifierExpression, ok := currentNode.(*IdentifierExpression)
@@ -920,6 +930,76 @@ func TestParser_Parse_ParseFunctionCall(t *testing.T) {
 		parser := New(test.Expr)
 		rootNode := parser.Parse()
 		assert.NotNil(t, rootNode)
+		testingVisitor := &TestingVisitor{
+			expected: test.Expected,
+			ptr:      0,
+			t:        t,
+		}
+		rootNode.Accept(testingVisitor)
+	}
+}
+
+func TestParser_Parse_ParseArrayLiteral(t *testing.T) {
+	tests := []struct {
+		Expr     string
+		Expected []Node
+	}{
+		{
+			Expr: `
+		 	[]
+		 `,
+			Expected: []Node{
+				&ArrayLiteral{},
+			},
+		},
+		{
+			Expr: `
+		 	[1, 2, 3]
+		 `,
+			Expected: []Node{
+				&ArrayLiteral{},
+				&NumberLiteralExpression{ActualValue: 1},
+				&NumberLiteralExpression{ActualValue: 2},
+				&NumberLiteralExpression{ActualValue: 3},
+			},
+		},
+		{
+			Expr: `
+			["comet"]
+		`,
+			Expected: []Node{
+				&ArrayLiteral{},
+				&StringLiteral{Value: "comet"},
+			},
+		},
+		{
+			Expr: `
+			[[1, 2, 3], [42, 43, 44], [1]]
+		`,
+			Expected: []Node{
+				&ArrayLiteral{},
+				&ArrayLiteral{},
+				&NumberLiteralExpression{ActualValue: 1},
+				&NumberLiteralExpression{ActualValue: 2},
+				&NumberLiteralExpression{ActualValue: 3},
+
+				&ArrayLiteral{},
+				&NumberLiteralExpression{ActualValue: 42},
+				&NumberLiteralExpression{ActualValue: 43},
+				&NumberLiteralExpression{ActualValue: 44},
+
+				&ArrayLiteral{},
+				&NumberLiteralExpression{ActualValue: 1},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		parser := New(test.Expr)
+		rootNode := parser.Parse()
+		assert.NotNil(t, rootNode)
+		assert.False(t, parser.Errors.HasAny())
+
 		testingVisitor := &TestingVisitor{
 			expected: test.Expected,
 			ptr:      0,

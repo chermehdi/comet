@@ -13,6 +13,14 @@ type PrintingVisitor struct {
 	buffer bytes.Buffer
 }
 
+func (p *PrintingVisitor) VisitArrayLiteral(array parser.ArrayLiteral) {
+	p.printIndent()
+	p.buffer.WriteString(array.Literal())
+	for _, el := range array.Elements {
+		p.VisitExpression(el)
+	}
+}
+
 func (p *PrintingVisitor) VisitAssignExpression(expression parser.AssignExpression) {
 	p.printIndent()
 	p.buffer.WriteString(fmt.Sprintf("AssignmentExpression(%s)", expression.VarName))

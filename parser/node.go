@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/chermehdi/comet/lexer"
 )
 
@@ -22,6 +23,7 @@ type NodeVisitor interface {
 	VisitNumberLiteral(NumberLiteralExpression)
 	VisitBooleanLiteral(BooleanLiteral)
 	VisitStringLiteral(StringLiteral)
+	VisitArrayLiteral(ArrayLiteral)
 	VisitParenthesisedExpression(ParenthesisedExpression)
 	VisitIdentifierExpression(IdentifierExpression)
 	VisitCallExpression(CallExpression)
@@ -380,5 +382,25 @@ func (s *StringLiteral) Statement() {
 }
 
 func (s *StringLiteral) Expr() {
+	panic("implement me")
+}
+
+type ArrayLiteral struct {
+	Elements []Expression
+}
+
+func (a *ArrayLiteral) Literal() string {
+	return fmt.Sprintf("ArrayLiteral(%d)", len(a.Elements))
+}
+
+func (a *ArrayLiteral) Accept(visitor NodeVisitor) {
+	visitor.VisitArrayLiteral(*a)
+}
+
+func (a *ArrayLiteral) Statement() {
+	panic("implement me")
+}
+
+func (a *ArrayLiteral) Expr() {
 	panic("implement me")
 }

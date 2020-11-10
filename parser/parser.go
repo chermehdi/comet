@@ -122,7 +122,7 @@ func (p *Parser) init() {
 	p.registerPrefixFunc(p.parseBoolean, lexer.True, lexer.False)
 	p.registerPrefixFunc(p.parseParenthesisedExpression, lexer.OpenParent)
 	p.registerPrefixFunc(p.parseStringLiteral, lexer.String)
-
+	p.registerPrefixFunc(p.parseArrayLiteral, lexer.OpenBracket)
 	p.registerBinaryFunc(p.parseBinaryExpression, lexer.Plus, lexer.Mul, lexer.Minus, lexer.Div,
 		lexer.GT, lexer.GTE, lexer.LT, lexer.LTE, lexer.EQ, lexer.NEQ, lexer.DotDot)
 }
@@ -433,4 +433,27 @@ func (p *Parser) expectNext(expected lexer.TokenType) {
 
 func (p *Parser) parseStringLiteral() Expression {
 	return &StringLiteral{Value: p.CurrentToken.Literal}
+}
+
+func (p *Parser) parseArrayLiteral() Expression {
+	array := &ArrayLiteral{
+		make([]Expression, 0),
+	}
+	p.advanceExpect(lexer.OpenBracket) // consume the first open bracket
+	// In case of an empty array
+	if p.CurrentToken.Type == lexer.CloseBracket {
+		return array
+	}
+	// exp1, exp2, exp3]
+	//     ^
+	for p.CurrentToken.Type != lexer.CloseBracket {
+		array.Elements = append(array.Elements, p.parseExpression())
+		p.advance()
+		if p.CurrentToken.Type == lexer.CloseBracket {
+			break
+		}
+		p.advanceExpect(lexer.Comma)
+	}
+	// make sure that we consume the current token
+	return array
 }
