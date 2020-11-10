@@ -48,7 +48,7 @@ func (t *TestingVisitor) VisitPrefixExpression(expression PrefixExpression) {
 	expression.Right.Accept(t)
 }
 
-func (t *TestingVisitor) VisitNumberLiteral(expression NumberLiteralExpression) {
+func (t *TestingVisitor) VisitNumberLiteral(expression NumberLiteral) {
 	t.assertNumberLiteralNode(expression)
 }
 
@@ -68,9 +68,9 @@ func (t *TestingVisitor) assertBinaryExpression(expression BinaryExpression) {
 	t.ptr++
 }
 
-func (t *TestingVisitor) assertNumberLiteralNode(expression NumberLiteralExpression) {
+func (t *TestingVisitor) assertNumberLiteralNode(expression NumberLiteral) {
 	currentNode := t.expected[t.ptr]
-	currentNumberLiteral, ok := currentNode.(*NumberLiteralExpression)
+	currentNumberLiteral, ok := currentNode.(*NumberLiteral)
 	assert.True(t.t, ok)
 	assert.Equal(t.t, currentNumberLiteral.ActualValue, expression.ActualValue)
 	t.ptr++
@@ -188,82 +188,82 @@ func TestParser_Parse_SimpleMathExpressions(t *testing.T) {
 	}{
 		{
 			Expr:     "1",
-			Expected: []Node{&NumberLiteralExpression{ActualValue: int64(1)}},
+			Expected: []Node{&NumberLiteral{ActualValue: int64(1)}},
 		},
 		{
 			Expr: "1 + 21",
 			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(21)},
+				&NumberLiteral{ActualValue: int64(21)},
 			},
 		},
 		{
 			Expr: "1 - 21",
 			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "-"}},
-				&NumberLiteralExpression{ActualValue: int64(21)},
+				&NumberLiteral{ActualValue: int64(21)},
 			},
 		},
 		{
 			Expr: "1 * 21",
 			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "*"}},
-				&NumberLiteralExpression{ActualValue: int64(21)},
+				&NumberLiteral{ActualValue: int64(21)},
 			},
 		},
 		{
 			Expr: "1 / 21",
 			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "/"}},
-				&NumberLiteralExpression{ActualValue: int64(21)},
+				&NumberLiteral{ActualValue: int64(21)},
 			},
 		},
 		{
 			Expr: "1 + 2 * 3 - 4",
 			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 				&BinaryExpression{Op: lexer.Token{Literal: "*"}},
-				&NumberLiteralExpression{ActualValue: int64(3)},
+				&NumberLiteral{ActualValue: int64(3)},
 				&BinaryExpression{Op: lexer.Token{Literal: "-"}},
-				&NumberLiteralExpression{ActualValue: int64(4)},
+				&NumberLiteral{ActualValue: int64(4)},
 			},
 		},
 		{
 			Expr: "(1)",
 			Expected: []Node{
 				&ParenthesisedExpression{},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 			},
 		},
 		{
 			Expr: "1 * (1 + 2)",
 			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "*"}},
 				&ParenthesisedExpression{},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 			},
 		},
 		{
 			Expr: "1..2",
 			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 			},
 		},
 		{
 			Expr: "1..a",
 			Expected: []Node{
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
 				&IdentifierExpression{Name: "a"},
 			},
@@ -293,7 +293,7 @@ func TestParser_ParseDeclarationStatement(t *testing.T) {
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "a"},
 				},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 			},
 		},
 		{
@@ -302,9 +302,9 @@ func TestParser_ParseDeclarationStatement(t *testing.T) {
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "a"},
 				},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(12)},
+				&NumberLiteral{ActualValue: int64(12)},
 			},
 		},
 		{
@@ -314,16 +314,16 @@ func TestParser_ParseDeclarationStatement(t *testing.T) {
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "a"},
 				},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(12)},
+				&NumberLiteral{ActualValue: int64(12)},
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "b"},
 				},
 				&ParenthesisedExpression{},
 				&IdentifierExpression{Name: "a"},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(12)},
+				&NumberLiteral{ActualValue: int64(12)},
 			},
 		},
 	}
@@ -350,28 +350,28 @@ func TestParser_ParseReturnStatement(t *testing.T) {
 			Expr: "return 1",
 			Expected: []Node{
 				&ReturnStatement{},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 			},
 		},
 		{
 			Expr: "return 1 * 2",
 			Expected: []Node{
 				&ReturnStatement{},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "*"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 			},
 		},
 		{
 			Expr: "return 1 + (2 - 1)",
 			Expected: []Node{
 				&ReturnStatement{},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
 				&ParenthesisedExpression{},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 				&BinaryExpression{Op: lexer.Token{Literal: "-"}},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 			},
 		},
 		{
@@ -386,7 +386,7 @@ func TestParser_ParseReturnStatement(t *testing.T) {
 			Expected: []Node{
 				&ReturnStatement{},
 				&ParenthesisedExpression{},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
 				&IdentifierExpression{Name: "a"},
 			},
@@ -447,7 +447,7 @@ func TestParser_ParsePrefixExpression(t *testing.T) {
 			Expr: "-1",
 			Expected: []Node{
 				&PrefixExpression{Op: lexer.Token{Literal: "-"}},
-				&NumberLiteralExpression{ActualValue: 1},
+				&NumberLiteral{ActualValue: 1},
 			},
 		},
 		{
@@ -488,9 +488,9 @@ func TestParser_ParsePrefixOperators(t *testing.T) {
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "a"},
 				},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 				&ReturnStatement{},
 				&IdentifierExpression{Name: "a"},
 			},
@@ -509,9 +509,9 @@ func TestParser_ParsePrefixOperators(t *testing.T) {
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "a"},
 				},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 			},
 		},
 		{
@@ -530,16 +530,16 @@ func TestParser_ParsePrefixOperators(t *testing.T) {
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "a"},
 				},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 				&BlockStatement{},
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "b"},
 				},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 				&ReturnStatement{},
 				&IdentifierExpression{Name: "a"},
 			},
@@ -571,9 +571,9 @@ func TestParser_ParseAssignExpression(t *testing.T) {
 `,
 			Expected: []Node{
 				&AssignExpression{VarName: "a"},
-				&NumberLiteralExpression{ActualValue: int64(10)},
+				&NumberLiteral{ActualValue: int64(10)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 			},
 		},
 	}
@@ -606,9 +606,9 @@ func TestParser_ParseBlockStatement(t *testing.T) {
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "a"},
 				},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 				&ReturnStatement{},
 				&IdentifierExpression{Name: "a"},
 			},
@@ -627,9 +627,9 @@ func TestParser_ParseBlockStatement(t *testing.T) {
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "a"},
 				},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 			},
 		},
 		{
@@ -648,16 +648,16 @@ func TestParser_ParseBlockStatement(t *testing.T) {
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "a"},
 				},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 				&BlockStatement{},
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "b"},
 				},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 				&ReturnStatement{},
 				&IdentifierExpression{Name: "a"},
 			},
@@ -691,7 +691,7 @@ func TestParser_ParseIfStatement(t *testing.T) {
 				&IfStatement{},
 				&IdentifierExpression{Name: "a"},
 				&BinaryExpression{Op: lexer.Token{Literal: "=="}},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BlockStatement{},
 				&BlockStatement{}, // accounting for the then empty block.
 			},
@@ -706,14 +706,14 @@ func TestParser_ParseIfStatement(t *testing.T) {
 				&IfStatement{},
 				&IdentifierExpression{Name: "a"},
 				&BinaryExpression{Op: lexer.Token{Literal: "=="}},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BlockStatement{}, // if close
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "a"},
 				},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 				&BlockStatement{}, // accounting for the then empty block.
 			},
 		},
@@ -733,9 +733,9 @@ func TestParser_ParseIfStatement(t *testing.T) {
 				&DeclarationStatement{
 					Identifier: lexer.Token{Literal: "a"},
 				},
-				&NumberLiteralExpression{ActualValue: int64(1)},
+				&NumberLiteral{ActualValue: int64(1)},
 				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 				&BlockStatement{}, // accounting for the then empty block.
 			},
 		},
@@ -769,9 +769,9 @@ func TestParser_ParseForStatement(t *testing.T) {
 				&IdentifierExpression{Name: "k"},
 				// TODO: a placeholder identifier should be a singleton to avoid instance bloat.
 				&IdentifierExpression{Name: "__empty__"},
-				&NumberLiteralExpression{ActualValue: int64(0)},
+				&NumberLiteral{ActualValue: int64(0)},
 				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 				&BlockStatement{},
 			},
 		},
@@ -784,9 +784,9 @@ func TestParser_ParseForStatement(t *testing.T) {
 				&ForStatement{},
 				&IdentifierExpression{Name: "k"},
 				&IdentifierExpression{Name: "v"},
-				&NumberLiteralExpression{ActualValue: int64(0)},
+				&NumberLiteral{ActualValue: int64(0)},
 				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
-				&NumberLiteralExpression{ActualValue: int64(2)},
+				&NumberLiteral{ActualValue: int64(2)},
 				&BlockStatement{},
 			},
 		},
@@ -854,7 +854,7 @@ func TestParser_Parse_ParseFunctionDeclaration(t *testing.T) {
 				&IdentifierExpression{Name: "b"},
 				&BlockStatement{},
 				&ReturnStatement{},
-				&NumberLiteralExpression{10},
+				&NumberLiteral{10},
 			},
 		},
 	}
@@ -899,9 +899,9 @@ func TestParser_Parse_ParseFunctionCall(t *testing.T) {
 		`,
 			Expected: []Node{
 				&CallExpression{Name: "foo"},
-				&NumberLiteralExpression{1},
+				&NumberLiteral{1},
 				&BinaryExpression{Op: lexer.Token{Literal: lexer.Plus}},
-				&NumberLiteralExpression{42},
+				&NumberLiteral{42},
 				&IdentifierExpression{"java"},
 				&BooleanLiteral{
 					ActualValue: true,
@@ -915,9 +915,9 @@ func TestParser_Parse_ParseFunctionCall(t *testing.T) {
 			Expected: []Node{
 				&DeclarationStatement{Identifier: lexer.Token{Literal: "result"}},
 				&CallExpression{Name: "foo"},
-				&NumberLiteralExpression{1},
+				&NumberLiteral{1},
 				&BinaryExpression{Op: lexer.Token{Literal: lexer.Plus}},
-				&NumberLiteralExpression{42},
+				&NumberLiteral{42},
 				&IdentifierExpression{"java"},
 				&BooleanLiteral{
 					ActualValue: true,
@@ -958,9 +958,9 @@ func TestParser_Parse_ParseArrayLiteral(t *testing.T) {
 		 `,
 			Expected: []Node{
 				&ArrayLiteral{},
-				&NumberLiteralExpression{ActualValue: 1},
-				&NumberLiteralExpression{ActualValue: 2},
-				&NumberLiteralExpression{ActualValue: 3},
+				&NumberLiteral{ActualValue: 1},
+				&NumberLiteral{ActualValue: 2},
+				&NumberLiteral{ActualValue: 3},
 			},
 		},
 		{
@@ -979,17 +979,17 @@ func TestParser_Parse_ParseArrayLiteral(t *testing.T) {
 			Expected: []Node{
 				&ArrayLiteral{},
 				&ArrayLiteral{},
-				&NumberLiteralExpression{ActualValue: 1},
-				&NumberLiteralExpression{ActualValue: 2},
-				&NumberLiteralExpression{ActualValue: 3},
+				&NumberLiteral{ActualValue: 1},
+				&NumberLiteral{ActualValue: 2},
+				&NumberLiteral{ActualValue: 3},
 
 				&ArrayLiteral{},
-				&NumberLiteralExpression{ActualValue: 42},
-				&NumberLiteralExpression{ActualValue: 43},
-				&NumberLiteralExpression{ActualValue: 44},
+				&NumberLiteral{ActualValue: 42},
+				&NumberLiteral{ActualValue: 43},
+				&NumberLiteral{ActualValue: 44},
 
 				&ArrayLiteral{},
-				&NumberLiteralExpression{ActualValue: 1},
+				&NumberLiteral{ActualValue: 1},
 			},
 		},
 	}

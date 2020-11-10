@@ -226,9 +226,9 @@ func (p *Parser) parseNumberLiteral() Expression {
 	val, err := strconv.ParseInt(p.CurrentToken.Literal, 10, 64)
 	if err != nil {
 		p.Errors.Report(p.CurrentToken, "Could not parse integer value %s", p.CurrentToken.Literal)
-		return &NumberLiteralExpression{0}
+		return &NumberLiteral{0}
 	}
-	return &NumberLiteralExpression{ActualValue: val}
+	return &NumberLiteral{ActualValue: val}
 }
 
 // an identifier is an expression that represents the name of a variable.

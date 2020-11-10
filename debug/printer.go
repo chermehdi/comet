@@ -99,7 +99,7 @@ func (p *PrintingVisitor) VisitPrefixExpression(expression parser.PrefixExpressi
 	p.indent -= IndentWidth
 }
 
-func (p *PrintingVisitor) VisitNumberLiteral(expression parser.NumberLiteralExpression) {
+func (p *PrintingVisitor) VisitNumberLiteral(expression parser.NumberLiteral) {
 	p.printIndent()
 	p.buffer.WriteString(fmt.Sprintf("Visiting a Number (%d)\n", expression.ActualValue))
 }

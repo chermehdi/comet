@@ -93,7 +93,7 @@ func (ev *Evaluator) Eval(node parser.Node) std.CometObject {
 		return ev.evalRootNode(n.Statements)
 	case *parser.PrefixExpression:
 		return ev.evalPrefixExpression(n)
-	case *parser.NumberLiteralExpression:
+	case *parser.NumberLiteral:
 		return &std.CometInt{n.ActualValue}
 	case *parser.BooleanLiteral:
 		if n.ActualValue {
