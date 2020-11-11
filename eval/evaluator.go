@@ -1,10 +1,11 @@
 package eval
 
 import (
+	"strings"
+
 	"github.com/chermehdi/comet/lexer"
 	"github.com/chermehdi/comet/parser"
 	"github.com/chermehdi/comet/std"
-	"strings"
 )
 
 type Evaluator struct {
@@ -127,6 +128,10 @@ func (ev *Evaluator) Eval(node parser.Node) std.CometObject {
 		result := ev.evalCallExpression(n)
 		return unwrap(result)
 	case *parser.AssignExpression:
+		_, found := ev.Scope.Lookup(n.VarName)
+		if !found {
+			return std.CreateError("Identifier (%s) is not bounded to any value, have you tried declaring it?", n.VarName)
+		}
 		result := unwrap(ev.Eval(n.Value))
 		ev.Scope.Store(n.VarName, result)
 		return result
