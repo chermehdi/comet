@@ -318,6 +318,11 @@ func TestEvaluator_Eval_DeclarationError(t *testing.T) {
 				`,
 			"Identifier (b) is not bounded to any value, have you tried declaring it?",
 		},
+		{
+			`c = 10
+				`,
+			"Identifier (c) is not bounded to any value, have you tried declaring it?",
+		},
 	}
 
 	evaluator := NewEvaluator()
