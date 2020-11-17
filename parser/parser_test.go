@@ -15,6 +15,15 @@ type TestingVisitor struct {
 	t        *testing.T
 }
 
+func (t *TestingVisitor) VisitArrayAccess(access IndexAccess) {
+	currentNode := t.expected[t.ptr]
+	_, isIndexAccess := currentNode.(*IndexAccess)
+	assert.True(t.t, isIndexAccess)
+	t.ptr++
+	access.Identifier.Accept(t)
+	access.Index.Accept(t)
+}
+
 func (t *TestingVisitor) VisitExpression(Expression) {}
 
 func (t *TestingVisitor) VisitStatement(Statement) {}
@@ -989,6 +998,64 @@ func TestParser_Parse_ParseArrayLiteral(t *testing.T) {
 				&NumberLiteral{ActualValue: 44},
 
 				&ArrayLiteral{},
+				&NumberLiteral{ActualValue: 1},
+			},
+		},
+		{
+			Expr: `
+			a[0]	
+		`,
+			Expected: []Node{
+				&IndexAccess{},
+				&IdentifierExpression{Name: "a"},
+				&NumberLiteral{ActualValue: 0},
+			},
+		},
+		{
+			Expr: `
+			a[0] 
+			1
+		`,
+			Expected: []Node{
+				&IndexAccess{},
+				&IdentifierExpression{Name: "a"},
+				&NumberLiteral{ActualValue: 0},
+				&NumberLiteral{ActualValue: 1},
+			},
+		},
+		{
+			Expr: `
+			a["string"] 
+			1
+		`,
+			Expected: []Node{
+				&IndexAccess{},
+				&IdentifierExpression{Name: "a"},
+				&StringLiteral{Value: "string"},
+				&NumberLiteral{ActualValue: 1},
+			},
+		},
+		{
+			Expr: `
+			a[b()] 
+			1
+		`,
+			Expected: []Node{
+				&IndexAccess{},
+				&IdentifierExpression{Name: "a"},
+				&CallExpression{Name: "b"},
+				&NumberLiteral{ActualValue: 1},
+			},
+		},
+		{
+			Expr: `
+			a()[b()] 
+			1
+		`,
+			Expected: []Node{
+				&IndexAccess{},
+				&CallExpression{Name: "a"},
+				&CallExpression{Name: "b"},
 				&NumberLiteral{ActualValue: 1},
 			},
 		},

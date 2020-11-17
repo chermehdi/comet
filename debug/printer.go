@@ -13,6 +13,14 @@ type PrintingVisitor struct {
 	buffer bytes.Buffer
 }
 
+func (p *PrintingVisitor) VisitArrayAccess(access parser.IndexAccess) {
+	p.printIndent()
+	p.buffer.WriteString("IndexAccess")
+	p.printIndent()
+	p.VisitExpression(access.Identifier)
+	p.VisitExpression(access.Index)
+}
+
 func (p *PrintingVisitor) VisitArrayLiteral(array parser.ArrayLiteral) {
 	p.printIndent()
 	p.buffer.WriteString(array.Literal())
@@ -26,7 +34,7 @@ func (p *PrintingVisitor) VisitAssignExpression(expression parser.AssignExpressi
 	p.buffer.WriteString(fmt.Sprintf("AssignmentExpression(%s)", expression.VarName))
 }
 
-func (p *PrintingVisitor) VisitForStatement(statement parser.ForStatement) {
+func (p *PrintingVisitor) VisitForStatement(parser.ForStatement) {
 	panic("implement me")
 }
 
@@ -67,7 +75,7 @@ func (p *PrintingVisitor) VisitExpression(parser.Expression) {
 	panic("implement me")
 }
 
-func (p *PrintingVisitor) VisitStatement(statement parser.Statement) {
+func (p *PrintingVisitor) VisitStatement(parser.Statement) {
 	panic("implement me")
 }
 
