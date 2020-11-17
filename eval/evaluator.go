@@ -137,6 +137,8 @@ func (ev *Evaluator) Eval(node parser.Node) std.CometObject {
 		result := unwrap(ev.Eval(n.Value))
 		ev.Scope.Store(n.VarName, result)
 		return result
+	case *parser.IndexAccess:
+		return ev.evalArrayAccess(n)
 	case *parser.ForStatement:
 		return unwrap(ev.evalForStatement(n))
 	}
@@ -375,6 +377,23 @@ func (ev *Evaluator) evalArrayElements(arr *parser.ArrayLiteral) std.CometObject
 
 	array.Values = arrayContent
 	return array
+}
+
+func (ev *Evaluator) evalArrayAccess(arr *parser.IndexAccess) std.CometObject {
+	array := ev.Eval(arr.Identifier)
+	if array.Type() != std.ArrayType {
+		return std.CreateError("Expected CometArray got %s", array.Type())
+	}
+	index := ev.Eval(arr.Index)
+	if index.Type() != std.IntType {
+		return std.CreateError("Expected CometInt got %s", index.Type())
+	}
+	indexVal := index.(*std.CometInt)
+	arrayVal := array.(*std.CometArray)
+	if indexVal.Value < 0 || indexVal.Value >= int64(arrayVal.Length) {
+		return std.CreateError("Array access out of bounds, array of length %d, index was: %d", arrayVal.Length, indexVal.Value)
+	}
+	return arrayVal.Values[int(indexVal.Value)]
 }
 
 func applyOp(op lexer.TokenType, left std.CometObject, right std.CometObject) std.CometObject {

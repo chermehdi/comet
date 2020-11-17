@@ -13,20 +13,22 @@ const (
 	ADD     = 1
 	MUL     = 2
 	PARENT  = 3
+	Index   = 4
 )
 
 var precedences = map[lexer.TokenType]int{
-	lexer.Plus:   ADD,
-	lexer.Minus:  ADD,
-	lexer.Mul:    MUL,
-	lexer.Div:    MUL,
-	lexer.LT:     LOG,
-	lexer.LTE:    LOG,
-	lexer.GT:     LOG,
-	lexer.GTE:    LOG,
-	lexer.EQ:     LOG,
-	lexer.NEQ:    LOG,
-	lexer.DotDot: PARENT,
+	lexer.Plus:        ADD,
+	lexer.Minus:       ADD,
+	lexer.Mul:         MUL,
+	lexer.Div:         MUL,
+	lexer.LT:          LOG,
+	lexer.LTE:         LOG,
+	lexer.GT:          LOG,
+	lexer.GTE:         LOG,
+	lexer.EQ:          LOG,
+	lexer.NEQ:         LOG,
+	lexer.DotDot:      PARENT,
+	lexer.OpenBracket: Index,
 }
 
 func getPrecedence(token lexer.Token) int {
@@ -99,9 +101,9 @@ type Parser struct {
 }
 
 func New(src string) *Parser {
-	lexer := lexer.NewLexer(src)
+	lex := lexer.NewLexer(src)
 	parser := &Parser{
-		lexer:  lexer,
+		lexer:  lex,
 		Errors: newErrorBag(),
 	}
 	parser.init()
@@ -123,6 +125,8 @@ func (p *Parser) init() {
 	p.registerPrefixFunc(p.parseParenthesisedExpression, lexer.OpenParent)
 	p.registerPrefixFunc(p.parseStringLiteral, lexer.String)
 	p.registerPrefixFunc(p.parseArrayLiteral, lexer.OpenBracket)
+
+	p.registerBinaryFunc(p.parseArrayAccess, lexer.OpenBracket)
 	p.registerBinaryFunc(p.parseBinaryExpression, lexer.Plus, lexer.Mul, lexer.Minus, lexer.Div,
 		lexer.GT, lexer.GTE, lexer.LT, lexer.LTE, lexer.EQ, lexer.NEQ, lexer.DotDot)
 }
@@ -456,4 +460,12 @@ func (p *Parser) parseArrayLiteral() Expression {
 	}
 	// make sure that we consume the current token
 	return array
+}
+
+func (p *Parser) parseArrayAccess(left Expression) Expression {
+	indexAccess := &IndexAccess{Identifier: left}
+	p.advance()
+	indexAccess.Index = p.parseExpression()
+	p.expectNext(lexer.CloseBracket)
+	return indexAccess
 }

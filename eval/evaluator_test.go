@@ -612,6 +612,76 @@ func TestEvaluator_Eval_EvaluateArrayDeclaration(t *testing.T) {
 	}
 }
 
+func TestEvaluator_Eval_EvaluateArrayAccess(t *testing.T) {
+	tests := []struct {
+		Src        string
+		AssertFunc func(*Evaluator)
+	}{
+		{
+			Src: `	
+				var a = [0, 1]
+				var b = a[0]
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				b := assertFoundInScope(t, evaluator, "b", std.IntType)
+				bValue := b.(*std.CometInt)
+				assert.Equal(t, int64(0), bValue.Value)
+			},
+		},
+		{
+			Src: `	
+				var a = ["12"]
+				var b = a[0]
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				b := assertFoundInScope(t, evaluator, "b", std.StrType)
+				bValue := b.(*std.CometStr)
+				assert.Equal(t, "12", bValue.Value)
+			},
+		},
+		{
+			Src: `	
+				func getArray() {
+					return [1, 2, 3]
+				}
+				var b = getArray()[0]
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				b := assertFoundInScope(t, evaluator, "b", std.IntType)
+				bValue := b.(*std.CometInt)
+				assert.Equal(t, int64(1), bValue.Value)
+			},
+		},
+		{
+			Src: `	
+				var b = [1, 2, 3][2]
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				b := assertFoundInScope(t, evaluator, "b", std.IntType)
+				bValue := b.(*std.CometInt)
+				assert.Equal(t, int64(3), bValue.Value)
+			},
+		},
+		{
+			Src: `	
+				var a = [[1, 42], [2, 3]]
+				var b = a[0][1] 
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				b := assertFoundInScope(t, evaluator, "b", std.IntType)
+				bValue := b.(*std.CometInt)
+				assert.Equal(t, int64(42), bValue.Value)
+			},
+		},
+	}
+	evaluator := NewEvaluator()
+	for _, test := range tests {
+		rootNode := parseOrDie(test.Src)
+		evaluator.Eval(rootNode)
+		test.AssertFunc(evaluator)
+	}
+}
+
 func assertError(t *testing.T, v std.CometObject, ExpectedErrorMsg string) {
 	err, ok := v.(*std.CometError)
 	assert.True(t, ok)

@@ -28,6 +28,7 @@ type NodeVisitor interface {
 	VisitIdentifierExpression(IdentifierExpression)
 	VisitCallExpression(CallExpression)
 	VisitAssignExpression(AssignExpression)
+	VisitArrayAccess(IndexAccess)
 
 	VisitDeclarationStatement(DeclarationStatement)
 	VisitReturnStatement(ReturnStatement)
@@ -402,5 +403,26 @@ func (a *ArrayLiteral) Statement() {
 }
 
 func (a *ArrayLiteral) Expr() {
+	panic("implement me")
+}
+
+type IndexAccess struct {
+	Identifier Expression
+	Index      Expression
+}
+
+func (i *IndexAccess) Literal() string {
+	panic("implement me")
+}
+
+func (i *IndexAccess) Accept(visitor NodeVisitor) {
+	visitor.VisitArrayAccess(*i)
+}
+
+func (i *IndexAccess) Statement() {
+	panic("implement me")
+}
+
+func (i *IndexAccess) Expr() {
 	panic("implement me")
 }
