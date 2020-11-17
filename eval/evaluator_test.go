@@ -2,11 +2,12 @@ package eval
 
 import (
 	"fmt"
+	"math"
+	"testing"
+
 	"github.com/chermehdi/comet/parser"
 	"github.com/chermehdi/comet/std"
 	"github.com/stretchr/testify/assert"
-	"math"
-	"testing"
 )
 
 func TestEvaluator_Eval_Integers(t *testing.T) {
@@ -316,6 +317,11 @@ func TestEvaluator_Eval_DeclarationError(t *testing.T) {
 			`var a = b * 10 
 				`,
 			"Identifier (b) is not bounded to any value, have you tried declaring it?",
+		},
+		{
+			`c = 10
+				`,
+			"Identifier (c) is not bounded to any value, have you tried declaring it?",
 		},
 	}
 
