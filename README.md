@@ -20,17 +20,31 @@ var a = 10
 var c = "some string"
 var arrayValue = [1, 2, 3]
 
-var add = func(a, b) {
+func add(a, b) {
     return a + b
 }
 
-var isBigger = func(a, b) {
+func isBigger(a, b) {
     return a > b
 }
 
-var equal = func(a, b) {
-    return a == b
+struct Data { 
+    func init(a, b, c) {
+        this.a = a
+        this.c = a + b
+    }
+    
+    func doSomething() {
+        return a + c 
+    } 
 }
+// STRUCT_DECL: struct Identifier BLOCK
+// BLOCK: { functions* } 
+
+// 
+// var data = new Data(a, b, c)
+
+// data.doSomething()
 
 // Object declaration
 var object = new()

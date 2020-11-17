@@ -15,6 +15,17 @@ type TestingVisitor struct {
 	t        *testing.T
 }
 
+func (t *TestingVisitor) VisitStructDeclaration(statement StructDeclarationStatement) {
+	currentNode := t.expected[t.ptr]
+	structValue, isStructDecl := currentNode.(*StructDeclarationStatement)
+	assert.True(t.t, isStructDecl)
+	t.ptr++
+	assert.Equal(t.t, structValue.Name, statement.Name)
+	for _, m := range statement.Methods {
+		m.Accept(t)
+	}
+}
+
 func (t *TestingVisitor) VisitArrayAccess(access IndexAccess) {
 	currentNode := t.expected[t.ptr]
 	_, isIndexAccess := currentNode.(*IndexAccess)
@@ -1057,6 +1068,62 @@ func TestParser_Parse_ParseArrayLiteral(t *testing.T) {
 				&CallExpression{Name: "a"},
 				&CallExpression{Name: "b"},
 				&NumberLiteral{ActualValue: 1},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		parser := New(test.Expr)
+		rootNode := parser.Parse()
+		assert.NotNil(t, rootNode)
+		assert.False(t, parser.Errors.HasAny())
+
+		testingVisitor := &TestingVisitor{
+			expected: test.Expected,
+			ptr:      0,
+			t:        t,
+		}
+		rootNode.Accept(testingVisitor)
+	}
+}
+func TestParser_Parse_ParseStructDeclaration(t *testing.T) {
+	tests := []struct {
+		Expr     string
+		Expected []Node
+	}{
+		{
+			Expr: `
+			struct Data { }
+		 `,
+			Expected: []Node{
+				&StructDeclarationStatement{Name: "Data"},
+			},
+		},
+		{
+			Expr: `
+			struct Data { 
+				func init() {}
+			}
+		 `,
+			Expected: []Node{
+				&StructDeclarationStatement{Name: "Data"},
+				&FunctionStatement{Name: "init"},
+				&BlockStatement{},
+			},
+		},
+		{
+			Expr: `
+			struct Data { 
+				func init() {}
+			}
+			func two() { } 
+		 `,
+			Expected: []Node{
+				&StructDeclarationStatement{Name: "Data"},
+				&FunctionStatement{Name: "init"},
+				&BlockStatement{},
+				&FunctionStatement{Name: "two"},
+				&BlockStatement{},
 			},
 		},
 	}

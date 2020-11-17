@@ -77,7 +77,7 @@ func TestLexer_Next(t *testing.T) {
 			NewToken(Comma, ","),
 			NewToken(Identifier, "a"),
 		}},
-		{`func new return if else a for var true false in`, []Token{
+		{`func new return if else a for var true false in new struct`, []Token{
 			NewToken(Func, "func"),
 			NewToken(New, "new"),
 			NewToken(Return, "return"),
@@ -89,6 +89,8 @@ func TestLexer_Next(t *testing.T) {
 			NewToken(True, "true"),
 			NewToken(False, "false"),
 			NewToken(In, "in"),
+			NewToken(New, "new"),
+			NewToken(Struct, "struct"),
 		}},
 		{`func main(a, b) {
 	var a = a[0]

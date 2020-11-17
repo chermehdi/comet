@@ -72,6 +72,7 @@ const (
 	// Keywords
 	Func   = "func"
 	New    = "new"
+	Struct = "struct"
 	Return = "return"
 	Var    = "var"
 	True   = "true"
@@ -97,6 +98,7 @@ const (
 var Keywords = map[string]TokenType{
 	"func":   Func,
 	"new":    New,
+	"struct": Struct,
 	"return": Return,
 	"var":    Var,
 	"true":   True,
