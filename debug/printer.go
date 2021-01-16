@@ -13,6 +13,14 @@ type PrintingVisitor struct {
 	buffer bytes.Buffer
 }
 
+func (p *PrintingVisitor) VisitNewCall(call parser.NewCallExpr) {
+	p.printIndent()
+	p.buffer.WriteString(fmt.Sprintf("NewCallExpression(%s)", call.Type))
+	for _, ex := range call.Args {
+		p.VisitExpression(ex)
+	}
+}
+
 func (p *PrintingVisitor) VisitStructDeclaration(statement parser.StructDeclarationStatement) {
 	p.printIndent()
 	p.buffer.WriteString(fmt.Sprintf("StructDeclaration %s", statement.Name))

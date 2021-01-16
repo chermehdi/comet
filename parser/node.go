@@ -29,6 +29,7 @@ type NodeVisitor interface {
 	VisitCallExpression(CallExpression)
 	VisitAssignExpression(AssignExpression)
 	VisitArrayAccess(IndexAccess)
+	VisitNewCall(NewCallExpr)
 
 	VisitDeclarationStatement(DeclarationStatement)
 	VisitReturnStatement(ReturnStatement)
@@ -443,4 +444,25 @@ func (s *StructDeclarationStatement) Literal() string {
 
 func (s *StructDeclarationStatement) Accept(visitor NodeVisitor) {
 	visitor.VisitStructDeclaration(*s)
+}
+
+type NewCallExpr struct {
+	Type string
+	Args []Expression
+}
+
+func (n *NewCallExpr) Expr() {
+	panic("implement me!")
+}
+
+func (n *NewCallExpr) Statement() {
+	panic("implement me!")
+}
+
+func (n *NewCallExpr) Literal() string {
+	panic("implement me!")
+}
+
+func (n *NewCallExpr) Accept(visitor NodeVisitor) {
+	visitor.VisitNewCall(*n)
 }

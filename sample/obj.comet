@@ -1,0 +1,8 @@
+struct A { 
+  func init() {
+  }
+}
+
+var a = new A()
+
+println(a)

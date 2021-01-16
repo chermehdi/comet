@@ -125,6 +125,7 @@ func (p *Parser) init() {
 	p.registerPrefixFunc(p.parseParenthesisedExpression, lexer.OpenParent)
 	p.registerPrefixFunc(p.parseStringLiteral, lexer.String)
 	p.registerPrefixFunc(p.parseArrayLiteral, lexer.OpenBracket)
+	p.registerPrefixFunc(p.parseNewCall, lexer.New)
 
 	p.registerBinaryFunc(p.parseArrayAccess, lexer.OpenBracket)
 	p.registerBinaryFunc(p.parseBinaryExpression, lexer.Plus, lexer.Mul, lexer.Minus, lexer.Div,
@@ -494,4 +495,12 @@ func (p *Parser) parseStructDeclaration() Statement {
 	}
 	structDec.Methods = functions
 	return structDec
+}
+
+func (p *Parser) parseNewCall() Expression {
+	p.expectNext(lexer.Identifier)
+	callExpr := &NewCallExpr{Type: p.CurrentToken.Literal}
+	p.advance() // skip the type declaration
+	callExpr.Args = p.parseCallArguments()
+	return callExpr
 }
