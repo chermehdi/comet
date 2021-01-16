@@ -11,6 +11,7 @@ import (
 type Evaluator struct {
 	Scope    *Scope
 	Builtins map[string]*std.Builtin
+	Types    map[string]*std.CometStruct
 }
 
 // Constructs a new evaluator
@@ -19,6 +20,7 @@ type Evaluator struct {
 func NewEvaluator() *Evaluator {
 	ev := &Evaluator{
 		Builtins: make(map[string]*std.Builtin),
+		Types:    make(map[string]*std.CometStruct),
 		Scope:    NewScope(nil),
 	}
 	for _, builtin := range std.Builtins {
@@ -95,7 +97,7 @@ func (ev *Evaluator) Eval(node parser.Node) std.CometObject {
 	case *parser.PrefixExpression:
 		return ev.evalPrefixExpression(n)
 	case *parser.NumberLiteral:
-		return &std.CometInt{n.ActualValue}
+		return &std.CometInt{Value: n.ActualValue}
 	case *parser.BooleanLiteral:
 		if n.ActualValue {
 			return std.TrueObject
@@ -119,7 +121,7 @@ func (ev *Evaluator) Eval(node parser.Node) std.CometObject {
 		if isError(result) {
 			return result
 		}
-		return &std.CometReturnWrapper{result}
+		return &std.CometReturnWrapper{Value: result}
 	case *parser.DeclarationStatement:
 		return ev.evalDeclareStatement(n)
 	case *parser.IdentifierExpression:
@@ -141,6 +143,8 @@ func (ev *Evaluator) Eval(node parser.Node) std.CometObject {
 		return ev.evalArrayAccess(n)
 	case *parser.ForStatement:
 		return unwrap(ev.evalForStatement(n))
+	case *parser.StructDeclarationStatement:
+		return ev.evalStructDecl(n)
 	}
 	return std.NopInstance
 }
@@ -165,6 +169,30 @@ func (ev *Evaluator) evalRootNode(statements []parser.Statement) std.CometObject
 		}
 	}
 	return res
+}
+
+func (ev *Evaluator) evalStructDecl(decl *parser.StructDeclarationStatement) std.CometObject {
+	// The struct name should be defined in the global scope of the current
+	// compilation unit.
+	// The struct methods should be registered:
+	//   - Scope the methods definitions with the struct declaration.
+	//   - Register in the global scope with the a "cheeky naming scheme" -->
+	//   Looks hacky
+	s := &std.CometStruct{Name: decl.Name, Methods: make([]*std.CometFunc, 0)}
+
+	for _, m := range decl.Methods {
+		fn := &std.CometFunc{
+			Name:   m.Name,
+			Params: m.Parameters,
+			Body:   m.Block,
+		}
+		if err := s.Add(fn); err != nil {
+			return std.CreateError(err.Error())
+		}
+	}
+
+	ev.Types[s.Name] = s
+	return std.NopInstance
 }
 
 func (ev *Evaluator) evalStatements(statements []parser.Statement) std.CometObject {
@@ -293,6 +321,7 @@ func (ev *Evaluator) evalIdentifier(n *parser.IdentifierExpression) std.CometObj
 
 func (ev *Evaluator) registerFunc(n *parser.FunctionStatement) std.CometObject {
 	function := &std.CometFunc{
+		Name:   n.Name,
 		Params: n.Parameters,
 		Body:   n.Block,
 	}
@@ -401,13 +430,13 @@ func applyOp(op lexer.TokenType, left std.CometObject, right std.CometObject) st
 	rightInt := right.(*std.CometInt)
 	switch op {
 	case lexer.Plus:
-		return &std.CometInt{leftInt.Value + rightInt.Value}
+		return &std.CometInt{Value: leftInt.Value + rightInt.Value}
 	case lexer.Minus:
-		return &std.CometInt{leftInt.Value - rightInt.Value}
+		return &std.CometInt{Value: leftInt.Value - rightInt.Value}
 	case lexer.Mul:
-		return &std.CometInt{leftInt.Value * rightInt.Value}
+		return &std.CometInt{Value: leftInt.Value * rightInt.Value}
 	case lexer.Div:
-		return &std.CometInt{leftInt.Value / rightInt.Value}
+		return &std.CometInt{Value: leftInt.Value / rightInt.Value}
 	case lexer.EQ:
 		return boolValue(leftInt.Value == rightInt.Value)
 	case lexer.NEQ:

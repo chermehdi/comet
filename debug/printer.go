@@ -13,6 +13,14 @@ type PrintingVisitor struct {
 	buffer bytes.Buffer
 }
 
+func (p *PrintingVisitor) VisitStructDeclaration(statement parser.StructDeclarationStatement) {
+	p.printIndent()
+	p.buffer.WriteString(fmt.Sprintf("StructDeclaration %s", statement.Name))
+	for _, method := range statement.Methods {
+		p.VisitFunctionStatement(*method)
+	}
+}
+
 func (p *PrintingVisitor) VisitArrayAccess(access parser.IndexAccess) {
 	p.printIndent()
 	p.buffer.WriteString("IndexAccess")

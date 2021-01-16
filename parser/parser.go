@@ -183,6 +183,8 @@ func (p *Parser) parseStatement() Statement {
 		return p.parseFunctionStatement()
 	case lexer.For:
 		return p.parseForStatement()
+	case lexer.Struct:
+		return p.parseStructDeclaration()
 	default:
 		return p.parseExpression()
 	}
@@ -468,4 +470,28 @@ func (p *Parser) parseArrayAccess(left Expression) Expression {
 	indexAccess.Index = p.parseExpression()
 	p.expectNext(lexer.CloseBracket)
 	return indexAccess
+}
+
+func (p *Parser) parseStructDeclaration() Statement {
+	structDec := &StructDeclarationStatement{}
+	p.advance() // skip the struct keyword
+	structDec.Name = p.CurrentToken.Literal
+	p.advance() // skip the literal
+	functions := make([]*FunctionStatement, 0)
+	p.advanceExpect(lexer.OpenBrace) // skip the opening brace
+	for {
+		if p.CurrentToken.Type == lexer.CloseBrace {
+			break
+		}
+		funcStatement := p.parseFunctionStatement()
+		funcCasted, ok := funcStatement.(*FunctionStatement)
+		if !ok {
+			p.Errors.Report(p.CurrentToken, "Expected a function declaration")
+			return structDec
+		}
+		functions = append(functions, funcCasted)
+		p.advanceExpect(lexer.CloseBrace)
+	}
+	structDec.Methods = functions
+	return structDec
 }

@@ -36,6 +36,7 @@ type NodeVisitor interface {
 	VisitIfStatement(IfStatement)
 	VisitFunctionStatement(FunctionStatement)
 	VisitForStatement(ForStatement)
+	VisitStructDeclaration(StructDeclarationStatement)
 }
 
 type Node interface {
@@ -425,4 +426,21 @@ func (i *IndexAccess) Statement() {
 
 func (i *IndexAccess) Expr() {
 	panic("implement me")
+}
+
+type StructDeclarationStatement struct {
+	Name    string
+	Methods []*FunctionStatement
+}
+
+func (s *StructDeclarationStatement) Statement() {
+	panic("implement me")
+}
+
+func (s *StructDeclarationStatement) Literal() string {
+	panic("implement me")
+}
+
+func (s *StructDeclarationStatement) Accept(visitor NodeVisitor) {
+	visitor.VisitStructDeclaration(*s)
 }

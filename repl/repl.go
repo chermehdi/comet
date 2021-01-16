@@ -30,7 +30,7 @@ func (r *Repl) Start(reader io.Reader, writer io.Writer) {
 				break
 			}
 			if line == "/scope" {
-				printScope(evaluator.Scope)
+				printScope(evaluator)
 				continue
 			}
 		}
@@ -47,10 +47,16 @@ func (r *Repl) Start(reader io.Reader, writer io.Writer) {
 	}
 }
 
-func printScope(scope *eval.Scope) {
+func printScope(eval *eval.Evaluator) {
+	fmt.Println("==== Variables ====")
+	scope := eval.Scope
 	for cur := scope; cur != nil; cur = cur.Parent {
 		for k, v := range cur.Variables {
 			fmt.Println(fmt.Sprintf("%s = %v", k, v.Type()))
 		}
+	}
+	fmt.Println("==== Types ====")
+	for _, t := range eval.Types {
+		fmt.Println(t.Name)
 	}
 }
