@@ -682,6 +682,57 @@ func TestEvaluator_Eval_EvaluateArrayAccess(t *testing.T) {
 	}
 }
 
+func TestEvaluator_Eval_EvaluateStructDeclaration(t *testing.T) {
+	tests := []struct {
+		Src        string
+		AssertFunc func(*Evaluator)
+	}{
+		{
+			Src: `	
+						struct a { }
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				s := assertFoundType(t, evaluator, "a")
+				assert.Equal(t, "a", s.Name)
+				assert.Equal(t, 0, len(s.Methods))
+			},
+		},
+		{
+			Src: `	
+						struct a { 
+							func init() { 
+								var temp = 10
+							}
+						}
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				s := assertFoundType(t, evaluator, "a")
+				assert.Equal(t, "a", s.Name)
+				assert.Equal(t, 1, len(s.Methods))
+			},
+		},
+		{
+			Src: `	
+						struct a { 
+							func testa() { 
+							}
+							func testa(a) { 
+							}
+						}
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				assertNotFoundType(t, evaluator, "a")
+			},
+		},
+	}
+	for _, test := range tests {
+		evaluator := NewEvaluator()
+		rootNode := parseOrDie(test.Src)
+		evaluator.Eval(rootNode)
+		test.AssertFunc(evaluator)
+	}
+}
+
 func assertError(t *testing.T, v std.CometObject, ExpectedErrorMsg string) {
 	err, ok := v.(*std.CometError)
 	assert.True(t, ok)
@@ -711,6 +762,17 @@ func assertFoundInScope(t *testing.T, ev *Evaluator, name string, expectedType s
 	assert.True(t, found)
 	assert.True(t, expectedType == obj.Type())
 	return obj
+}
+
+func assertFoundType(t *testing.T, ev *Evaluator, name string) *std.CometStruct {
+	obj, found := ev.Types[name]
+	assert.True(t, found)
+	return obj
+}
+
+func assertNotFoundType(t *testing.T, ev *Evaluator, name string) {
+	_, found := ev.Types[name]
+	assert.False(t, found)
 }
 
 func parseOrDie(s string) parser.Node {

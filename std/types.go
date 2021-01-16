@@ -2,6 +2,7 @@ package std
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/chermehdi/comet/parser"
 )
@@ -126,6 +127,7 @@ func (c *CometReturnWrapper) ToString() string {
 }
 
 type CometFunc struct {
+	Name   string
 	Params []*parser.IdentifierExpression
 	Body   *parser.BlockStatement
 }
@@ -157,4 +159,25 @@ func CreateError(s string, params ...interface{}) CometObject {
 	return &CometError{
 		message,
 	}
+}
+
+// CometStruct represents a struct declaration in the comet language.
+type CometStruct struct {
+	Name    string
+	Methods []*CometFunc
+}
+
+// Add adds a method to a struct with performing sanity checks according to the
+// language rules.
+func (s *CometStruct) Add(fn *CometFunc) error {
+	for _, m := range s.Methods {
+		if m.Name == fn.Name {
+			// As Comet is not typed it does not make sense to have method overloading
+			// as A(1, 2) is equivalenet to A(1, 2, "") because no argument checking
+			// is performed in the current implementation.
+			return errors.New(fmt.Sprintf("Method already exist with the name '%s' on '%s' struct", m.Name, s.Name))
+		}
+	}
+	s.Methods = append(s.Methods, fn)
+	return nil
 }

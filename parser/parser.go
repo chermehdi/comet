@@ -490,8 +490,8 @@ func (p *Parser) parseStructDeclaration() Statement {
 			return structDec
 		}
 		functions = append(functions, funcCasted)
+		p.advanceExpect(lexer.CloseBrace)
 	}
 	structDec.Methods = functions
-	p.advanceExpect(lexer.CloseBrace)
 	return structDec
 }

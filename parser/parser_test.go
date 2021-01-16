@@ -1115,6 +1115,24 @@ func TestParser_Parse_ParseStructDeclaration(t *testing.T) {
 			Expr: `
 			struct Data { 
 				func init() {}
+				func testa() {}
+			}
+			func two() { } 
+		 `,
+			Expected: []Node{
+				&StructDeclarationStatement{Name: "Data"},
+				&FunctionStatement{Name: "init"},
+				&BlockStatement{},
+				&FunctionStatement{Name: "testa"},
+				&BlockStatement{},
+				&FunctionStatement{Name: "two"},
+				&BlockStatement{},
+			},
+		},
+		{
+			Expr: `
+			struct Data { 
+				func init() {}
 			}
 			func two() { } 
 		 `,
