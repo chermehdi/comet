@@ -165,6 +165,22 @@ func (ev *Evaluator) evalNewCall(expr *parser.NewCallExpr) std.CometObject {
 		return std.CreateError("Type '%s' not found", expr.Type)
 	}
 	instance := std.NewInstance(t)
+	constructor, found := t.GetConstructor()
+	if found {
+		if len(expr.Args) > len(constructor.Params) {
+			return std.CreateError("Cannot call '%s''s Constructor, method expected at least '%d' params, got '%d'", t.Name, len(expr.Args), len(constructor.Params))
+		}
+		// TODO: code duplication
+		callSiteScope := NewScope(ev.Scope)
+		callSiteScope.Variables["this"] = instance
+		for i, param := range expr.Args {
+			callSiteScope.Variables[constructor.Params[i].Name] = ev.Eval(param)
+		}
+		oldScope := ev.Scope
+		ev.Scope = callSiteScope
+		ev.Eval(constructor.Body)
+		ev.Scope = oldScope
+	}
 	return instance
 }
 
@@ -189,7 +205,7 @@ func (ev *Evaluator) evalStructDecl(decl *parser.StructDeclarationStatement) std
 	//   - Scope the methods definitions with the struct declaration.
 	//   - Register in the global scope with the a "cheeky naming scheme" -->
 	//   Looks hacky
-	s := &std.CometStruct{Name: decl.Name, Methods: make([]*std.CometFunc, 0)}
+	s := &std.CometStruct{Name: decl.Name, Methods: make(map[string]*std.CometFunc, 0)}
 
 	for _, m := range decl.Methods {
 		fn := &std.CometFunc{

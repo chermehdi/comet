@@ -1,5 +1,11 @@
+
+
+var aa = 10
 struct A { 
   func init() {
+    var dd = 12
+    printf("%d", aa)
+    println("In the constructor")
   }
 }
 

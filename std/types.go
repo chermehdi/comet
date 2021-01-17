@@ -166,22 +166,29 @@ func CreateError(s string, params ...interface{}) CometObject {
 // Top level declaration
 type CometStruct struct {
 	Name    string
-	Methods []*CometFunc
+	Methods map[string]*CometFunc
 }
 
 // Add adds a method to a struct with performing sanity checks according to the
 // language rules.
 func (s *CometStruct) Add(fn *CometFunc) error {
-	for _, m := range s.Methods {
-		if m.Name == fn.Name {
-			// As Comet is not typed it does not make sense to have method overloading
-			// as A(1, 2) is equivalenet to A(1, 2, "") because no argument checking
-			// is performed in the current implementation.
-			return errors.New(fmt.Sprintf("Method already exist with the name '%s' on '%s' struct", m.Name, s.Name))
-		}
+	// As Comet is not typed it does not make sense to have method overloading
+	// as A(1, 2) is equivalenet to A(1, 2, "") because no argument checking
+	// is performed in the current implementation.
+	_, found := s.Methods[fn.Name]
+	if found {
+		return errors.New(fmt.Sprintf("Method already exist with the name '%s' on '%s' struct", fn.Name, s.Name))
 	}
-	s.Methods = append(s.Methods, fn)
+	s.Methods[fn.Name] = fn
 	return nil
+}
+
+// GetConstructor returns the CometFunc coresponding to the constructor of this
+// type declaration.
+// This should only be used at first time creating an instance of this type.
+func (s *CometStruct) GetConstructor() (*CometFunc, bool) {
+	fn, found := s.Methods["init"]
+	return fn, found
 }
 
 // CometInstance is the object created from a given `Type`

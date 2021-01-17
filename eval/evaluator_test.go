@@ -733,6 +733,55 @@ func TestEvaluator_Eval_EvaluateStructDeclaration(t *testing.T) {
 	}
 }
 
+func TestEvaluator_Eval_EvaluateInstanceCreation(t *testing.T) {
+	tests := []struct {
+		Src        string
+		AssertFunc func(*Evaluator)
+	}{
+		{
+			Src: `	
+						struct A { 
+						}
+						var a = new A()
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				tp := assertFoundType(t, evaluator, "A")
+				s := assertFoundInScope(t, evaluator, "a", std.ObjType)
+				p, ok := s.(*std.CometInstance)
+				assert.True(t, ok)
+				assert.Equal(t, p.Struct, tp)
+				assert.Equal(t, 0, len(p.Fields))
+			},
+		},
+		{
+			Src: `	
+						struct A { 
+						}
+						var a = new A()
+						var b = new A()
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				tp := assertFoundType(t, evaluator, "A")
+				sa := assertFoundInScope(t, evaluator, "a", std.ObjType)
+				sb := assertFoundInScope(t, evaluator, "b", std.ObjType)
+				pa, oka := sa.(*std.CometInstance)
+				pb, okb := sb.(*std.CometInstance)
+				assert.True(t, oka)
+				assert.True(t, okb)
+				assert.Equal(t, pa.Struct, tp)
+				assert.Equal(t, pb.Struct, tp)
+				assert.Equal(t, 0, len(pa.Fields))
+				assert.Equal(t, 0, len(pb.Fields))
+			},
+		},
+	}
+	for _, test := range tests {
+		evaluator := NewEvaluator()
+		rootNode := parseOrDie(test.Src)
+		evaluator.Eval(rootNode)
+		test.AssertFunc(evaluator)
+	}
+}
 func assertError(t *testing.T, v std.CometObject, ExpectedErrorMsg string) {
 	err, ok := v.(*std.CometError)
 	assert.True(t, ok)
