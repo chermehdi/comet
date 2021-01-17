@@ -18,6 +18,7 @@ const (
 	FuncType      = "FUNCTION"
 	ErrorType     = "ERROR"
 	RangeType     = "RANGE"
+	ObjType       = "OBJECT"
 	ReturnWrapper = "ReturnWrapper"
 	Nop           = "NOP"
 )
@@ -162,6 +163,7 @@ func CreateError(s string, params ...interface{}) CometObject {
 }
 
 // CometStruct represents a struct declaration in the comet language.
+// Top level declaration
 type CometStruct struct {
 	Name    string
 	Methods []*CometFunc
@@ -180,4 +182,18 @@ func (s *CometStruct) Add(fn *CometFunc) error {
 	}
 	s.Methods = append(s.Methods, fn)
 	return nil
+}
+
+// CometInstance is the object created from a given `Type`
+type CometInstance struct {
+	Struct *CometStruct
+}
+
+func (c *CometInstance) Type() CometType {
+	return ObjType
+}
+
+func (c *CometInstance) ToString() string {
+	// TODO: delegate to some special method on the Type declaration
+	return fmt.Sprintf("CometInstance")
 }

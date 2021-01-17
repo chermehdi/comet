@@ -15,7 +15,7 @@ type PrintingVisitor struct {
 
 func (p *PrintingVisitor) VisitNewCall(call parser.NewCallExpr) {
 	p.printIndent()
-	p.buffer.WriteString(fmt.Sprintf("NewCallExpression(%s)", call.Type))
+	p.buffer.WriteString(fmt.Sprintf("NewCallExpression(%s)\n", call.Type))
 	for _, ex := range call.Args {
 		p.VisitExpression(ex)
 	}
@@ -23,7 +23,7 @@ func (p *PrintingVisitor) VisitNewCall(call parser.NewCallExpr) {
 
 func (p *PrintingVisitor) VisitStructDeclaration(statement parser.StructDeclarationStatement) {
 	p.printIndent()
-	p.buffer.WriteString(fmt.Sprintf("StructDeclaration %s", statement.Name))
+	p.buffer.WriteString(fmt.Sprintf("StructDeclaration(Type=%s)\n", statement.Name))
 	for _, method := range statement.Methods {
 		p.VisitFunctionStatement(*method)
 	}
@@ -47,7 +47,7 @@ func (p *PrintingVisitor) VisitArrayLiteral(array parser.ArrayLiteral) {
 
 func (p *PrintingVisitor) VisitAssignExpression(expression parser.AssignExpression) {
 	p.printIndent()
-	p.buffer.WriteString(fmt.Sprintf("AssignmentExpression(%s)", expression.VarName))
+	p.buffer.WriteString(fmt.Sprintf("AssignmentExpression(%s)\n", expression.VarName))
 }
 
 func (p *PrintingVisitor) VisitForStatement(parser.ForStatement) {
@@ -168,7 +168,7 @@ func (p *PrintingVisitor) VisitBooleanLiteral(literal parser.BooleanLiteral) {
 
 func (p *PrintingVisitor) VisitFunctionStatement(statement parser.FunctionStatement) {
 	p.printIndent()
-	p.buffer.WriteString(fmt.Sprintf("FuncStatement %s\n", statement.Name))
+	p.buffer.WriteString(fmt.Sprintf("FuncStatement(Name='%s')\n", statement.Name))
 	p.indent += IndentWidth
 	p.printIndent()
 	p.buffer.WriteString("Parameters: \n")
@@ -181,7 +181,7 @@ func (p *PrintingVisitor) VisitFunctionStatement(statement parser.FunctionStatem
 
 func (p *PrintingVisitor) VisitCallExpression(expression parser.CallExpression) {
 	p.printIndent()
-	p.buffer.WriteString(fmt.Sprintf("CallExpression %s\n", expression.Name))
+	p.buffer.WriteString(fmt.Sprintf("CallExpression(Name='%s')\n", expression.Name))
 	p.indent += IndentWidth
 	p.printIndent()
 	p.buffer.WriteString("Parameters: \n")

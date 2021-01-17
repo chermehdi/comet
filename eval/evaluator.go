@@ -145,6 +145,8 @@ func (ev *Evaluator) Eval(node parser.Node) std.CometObject {
 		return unwrap(ev.evalForStatement(n))
 	case *parser.StructDeclarationStatement:
 		return ev.evalStructDecl(n)
+	case *parser.NewCallExpr:
+		return ev.evalNewCall(n)
 	}
 	return std.NopInstance
 }
@@ -155,6 +157,14 @@ func unwrap(result std.CometObject) std.CometObject {
 		return unwrapped.Value
 	}
 	return result
+}
+
+func (ev *Evaluator) evalNewCall(expr *parser.NewCallExpr) std.CometObject {
+	_, found := ev.Types[expr.Type]
+	if !found {
+		return std.CreateError("Type '%s' not found", expr.Type)
+	}
+	return std.NopInstance
 }
 
 func (ev *Evaluator) evalRootNode(statements []parser.Statement) std.CometObject {
