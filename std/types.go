@@ -186,7 +186,13 @@ func (s *CometStruct) Add(fn *CometFunc) error {
 
 // CometInstance is the object created from a given `Type`
 type CometInstance struct {
+	// Struct is the type definition for the given instance
+	// every method on the struct declaration should take the current instance
+	// as the this pointer reference.
 	Struct *CometStruct
+	// Fields represent the struct's state
+	// Fields could be added at any point since this is a dynamic language
+	Fields map[string]CometInstance
 }
 
 func (c *CometInstance) Type() CometType {
@@ -195,5 +201,13 @@ func (c *CometInstance) Type() CometType {
 
 func (c *CometInstance) ToString() string {
 	// TODO: delegate to some special method on the Type declaration
-	return fmt.Sprintf("CometInstance")
+	return fmt.Sprintf("CometInstance(Type=%s)", c.Struct.Name)
+}
+
+// NewInstance creates a new comet object
+func NewInstance(typeDec *CometStruct) *CometInstance {
+	return &CometInstance{
+		Struct: typeDec,
+		Fields: make(map[string]CometInstance, 0),
+	}
 }

@@ -160,11 +160,12 @@ func unwrap(result std.CometObject) std.CometObject {
 }
 
 func (ev *Evaluator) evalNewCall(expr *parser.NewCallExpr) std.CometObject {
-	_, found := ev.Types[expr.Type]
+	t, found := ev.Types[expr.Type]
 	if !found {
 		return std.CreateError("Type '%s' not found", expr.Type)
 	}
-	return std.NopInstance
+	instance := std.NewInstance(t)
+	return instance
 }
 
 func (ev *Evaluator) evalRootNode(statements []parser.Statement) std.CometObject {

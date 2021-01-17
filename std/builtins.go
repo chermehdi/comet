@@ -86,6 +86,8 @@ func ToString(object CometObject) *CometStr {
 	case *CometError:
 		value := n.Message
 		return &CometStr{Value: value, Size: len(value)}
+	case *CometInstance:
+		return &CometStr{Value: n.ToString(), Size: len(n.ToString())}
 	default:
 		panic("All types should have been exhausted!!")
 	}
@@ -99,6 +101,8 @@ func extractPrimitive(object CometObject) interface{} {
 		return n.Value
 	case *CometInt:
 		return n.Value
+	case *CometInstance:
+		return n.ToString()
 	default:
 		return object
 	}
