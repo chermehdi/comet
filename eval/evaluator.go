@@ -14,6 +14,12 @@ type Evaluator struct {
 	Types    map[string]*std.CometStruct
 }
 
+// Param is a named parameter within the interpreter
+type Param struct {
+	Name string
+	Val  std.CometObject
+}
+
 // Constructs a new evaluator
 // Each constructed evaluator has it's own Scope, i.e variables accessible from one Evaluator
 // Are not accessible from another one.
@@ -165,23 +171,49 @@ func (ev *Evaluator) evalNewCall(expr *parser.NewCallExpr) std.CometObject {
 		return std.CreateError("Type '%s' not found", expr.Type)
 	}
 	instance := std.NewInstance(t)
+	params := make([]Param, len(expr.Args))
 	constructor, found := t.GetConstructor()
-	if found {
-		if len(expr.Args) > len(constructor.Params) {
-			return std.CreateError("Cannot call '%s''s Constructor, method expected at least '%d' params, got '%d'", t.Name, len(expr.Args), len(constructor.Params))
+
+	if !found {
+		if len(expr.Args) > 0 {
+			return std.CreateError("Cannot find a defined constructor on the '%s' type, make sure to define an 'init' method on the struct", t.Name)
 		}
-		// TODO: code duplication
+		// it's okay to create a struct instance with no explicit constructor, if the constructor call didn't specify a parameter
+		return instance
+	}
+
+	for i, param := range expr.Args {
+		v := ev.Eval(param)
+		if v.Type() == std.ErrorType {
+			return v
+		}
+		params[i] = Param{
+			Name: constructor.Params[i].Name,
+			Val:  v,
+		}
+	}
+	res := ev.callOnObject("init", instance, params...)
+	if res.Type() == std.ErrorType {
+		return res
+	}
+	return instance
+}
+
+func (ev *Evaluator) callOnObject(name string, object *std.CometInstance, params ...Param) std.CometObject {
+	constructor, found := object.Struct.Methods[name]
+	if found {
 		callSiteScope := NewScope(ev.Scope)
-		callSiteScope.Variables["this"] = instance
-		for i, param := range expr.Args {
-			callSiteScope.Variables[constructor.Params[i].Name] = ev.Eval(param)
+		callSiteScope.Variables["this"] = object
+		for _, p := range params {
+			callSiteScope.Variables[p.Name] = p.Val
 		}
 		oldScope := ev.Scope
 		ev.Scope = callSiteScope
-		ev.Eval(constructor.Body)
+		res := ev.Eval(constructor.Body)
 		ev.Scope = oldScope
+		return unwrap(res)
 	}
-	return instance
+	return std.CreateError("Method '%s' Not found on instance of type '%s'", name, object.Struct.Name)
 }
 
 func (ev *Evaluator) evalRootNode(statements []parser.Statement) std.CometObject {
@@ -270,6 +302,46 @@ func (ev *Evaluator) evalBinaryExpression(n *parser.BinaryExpression) std.CometO
 		return left
 	}
 
+	// Prioritize the dot operation
+	if n.Op.Type == lexer.Dot {
+		fn, ok := n.Right.(*parser.CallExpression)
+		if !ok {
+			return std.CreateError("Used '.' operator with none function element")
+		}
+		if left.Type() != std.ObjType {
+			// You can't call methods on none object types
+			return std.CreateError("Cannot call method '%s' on none object type", fn.Name)
+		}
+
+		instance := left.(*std.CometInstance)
+		method, found := instance.Struct.GetMethod(fn.Name)
+
+		if !found {
+			return std.CreateError("Could not find method '%s' on type '%s'", fn.Name, instance.Struct.Name)
+		}
+
+		params := make([]Param, len(fn.Arguments))
+		if len(method.Params) > len(fn.Arguments) {
+			return std.CreateError("Method '%s' on type '%s' expects at least %d parameters, %d were given",
+				method.Name,
+				instance.Struct.Name,
+				len(method.Params),
+				len(fn.Arguments))
+		}
+
+		for i, p := range method.Params {
+			v := ev.Eval(fn.Arguments[i])
+			if v.Type() == std.ErrorType {
+				return v
+			}
+			params[i] = Param{
+				Name: p.Name,
+				Val:  v,
+			}
+		}
+		return ev.callOnObject(fn.Name, instance, params...)
+	}
+
 	right := ev.Eval(n.Right)
 	if isError(right) {
 		return right
@@ -335,7 +407,7 @@ func (ev *Evaluator) evalDeclareStatement(n *parser.DeclarationStatement) std.Co
 	// TODO(chermehdi): add a shadowing diagnostic message if the store is overriding
 	// an existing variable
 	ev.Scope.Declare(n.Identifier.Literal, value)
-	return std.NopInstance
+	return value
 }
 
 func (ev *Evaluator) evalIdentifier(n *parser.IdentifierExpression) std.CometObject {

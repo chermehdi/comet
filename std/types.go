@@ -187,10 +187,15 @@ func (s *CometStruct) Add(fn *CometFunc) error {
 // type declaration.
 // This should only be used at first time creating an instance of this type.
 func (s *CometStruct) GetConstructor() (*CometFunc, bool) {
-	fn, found := s.Methods["init"]
-	return fn, found
+	return s.GetMethod("init")
 }
 
+// GetMethod return the CometFunc name with name
+// The second parameter is `false` if the method is not found
+func (s *CometStruct) GetMethod(name string) (*CometFunc, bool) {
+	fn, found := s.Methods[name]
+	return fn, found
+}
 // CometInstance is the object created from a given `Type`
 type CometInstance struct {
 	// Struct is the type definition for the given instance

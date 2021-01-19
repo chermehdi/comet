@@ -782,6 +782,98 @@ func TestEvaluator_Eval_EvaluateInstanceCreation(t *testing.T) {
 		test.AssertFunc(evaluator)
 	}
 }
+
+func TestEvaluator_Eval_EvaluateMethodCall(t *testing.T) {
+	tests := []struct {
+		Src        string
+		AssertFunc func(*Evaluator)
+	}{
+		{
+			Src: `	
+						struct A { 
+							func init() { }
+							func hello() {
+								return 12
+							}
+						}
+						var a = new A()
+ 						var res = a.hello()
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				tp := assertFoundType(t, evaluator, "A")
+				s := assertFoundInScope(t, evaluator, "a", std.ObjType)
+				p, ok := s.(*std.CometInstance)
+				assert.True(t, ok)
+				assert.Equal(t, p.Struct, tp)
+				assert.Equal(t, 0, len(p.Fields))
+				res := assertFoundInScope(t, evaluator, "res", std.IntType)
+				val, ok := res.(*std.CometInt)
+				assert.True(t, ok)
+				assert.Equal(t, int64(12), val.Value)
+			},
+		},
+		{
+			Src: `	
+						struct A { 
+							func add(a, b) {
+								return a + b
+							}
+						}
+						var a = new A()
+ 						var res = a.add(10, 20)
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				tp := assertFoundType(t, evaluator, "A")
+				s := assertFoundInScope(t, evaluator, "a", std.ObjType)
+				p, ok := s.(*std.CometInstance)
+				assert.True(t, ok)
+				assert.Equal(t, p.Struct, tp)
+				assert.Equal(t, 0, len(p.Fields))
+				res := assertFoundInScope(t, evaluator, "res", std.IntType)
+				val, ok := res.(*std.CometInt)
+				assert.True(t, ok)
+				assert.Equal(t, int64(30), val.Value)
+			},
+		},
+		{
+			Src: `	
+						struct A { 
+							func mul(a, b) {
+								return a * b.get()	
+							}
+						}
+						struct B { func get() { return 12 } } 
+						var a = new A()
+						var b = new B()
+ 						var res = a.mul(3, b)
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				tp := assertFoundType(t, evaluator, "A")
+				s := assertFoundInScope(t, evaluator, "a", std.ObjType)
+				p, ok := s.(*std.CometInstance)
+				assert.True(t, ok)
+				assert.Equal(t, p.Struct, tp)
+				assert.Equal(t, 0, len(p.Fields))
+				tp = assertFoundType(t, evaluator, "B")
+				s = assertFoundInScope(t, evaluator, "b", std.ObjType)
+				p, ok = s.(*std.CometInstance)
+				assert.True(t, ok)
+				assert.Equal(t, p.Struct, tp)
+				assert.Equal(t, 0, len(p.Fields))
+				res := assertFoundInScope(t, evaluator, "res", std.IntType)
+				val, ok := res.(*std.CometInt)
+				assert.True(t, ok)
+				assert.Equal(t, int64(36), val.Value)
+			},
+		},
+	}
+	for _, test := range tests {
+		evaluator := NewEvaluator()
+		rootNode := parseOrDie(test.Src)
+		evaluator.Eval(rootNode)
+		test.AssertFunc(evaluator)
+	}
+}
 func assertError(t *testing.T, v std.CometObject, ExpectedErrorMsg string) {
 	err, ok := v.(*std.CometError)
 	assert.True(t, ok)
