@@ -204,7 +204,7 @@ type CometInstance struct {
 	Struct *CometStruct
 	// Fields represent the struct's state
 	// Fields could be added at any point since this is a dynamic language
-	Fields map[string]CometInstance
+	Fields map[string]CometObject
 }
 
 func (c *CometInstance) Type() CometType {
@@ -220,6 +220,6 @@ func (c *CometInstance) ToString() string {
 func NewInstance(typeDec *CometStruct) *CometInstance {
 	return &CometInstance{
 		Struct: typeDec,
-		Fields: make(map[string]CometInstance, 0),
+		Fields: make(map[string]CometObject, 0),
 	}
 }

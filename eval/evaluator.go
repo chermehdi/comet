@@ -12,6 +12,10 @@ type Evaluator struct {
 	Scope    *Scope
 	Builtins map[string]*std.Builtin
 	Types    map[string]*std.CometStruct
+	// This is only set if we are in the middle of a field access operation
+	// the underlying assignments will use this flag to decide on whether to error on unknown variable assignments
+	// or to create new ones and giving them back to the struct in scope.
+	CurStruct *std.CometStruct
 }
 
 // Param is a named parameter within the interpreter
@@ -20,7 +24,7 @@ type Param struct {
 	Val  std.CometObject
 }
 
-// Constructs a new evaluator
+// NewEvaluator Constructs a new evaluator
 // Each constructed evaluator has it's own Scope, i.e variables accessible from one Evaluator
 // Are not accessible from another one.
 func NewEvaluator() *Evaluator {
@@ -138,13 +142,7 @@ func (ev *Evaluator) Eval(node parser.Node) std.CometObject {
 		result := ev.evalCallExpression(n)
 		return unwrap(result)
 	case *parser.AssignExpression:
-		_, found := ev.Scope.Lookup(n.VarName)
-		if !found {
-			return std.CreateError("Identifier (%s) is not bounded to any value, have you tried declaring it?", n.VarName)
-		}
-		result := unwrap(ev.Eval(n.Value))
-		ev.Scope.Store(n.VarName, result)
-		return result
+		return ev.EvalAssignExpression(n)
 	case *parser.IndexAccess:
 		return ev.evalArrayAccess(n)
 	case *parser.ForStatement:
@@ -296,6 +294,11 @@ func (ev *Evaluator) evalPrefixExpression(n *parser.PrefixExpression) std.CometO
 	}
 }
 
+func (ev *Evaluator) SetField(instance *std.CometInstance, name string, value parser.Expression) {
+	val := ev.Eval(value)
+	instance.Fields[name] = val
+}
+
 func (ev *Evaluator) evalBinaryExpression(n *parser.BinaryExpression) std.CometObject {
 	left := ev.Eval(n.Left)
 	if isError(left) {
@@ -304,6 +307,17 @@ func (ev *Evaluator) evalBinaryExpression(n *parser.BinaryExpression) std.CometO
 
 	// Prioritize the dot operation
 	if n.Op.Type == lexer.Dot {
+		as, ok := n.Right.(*parser.AssignExpression)
+		if ok {
+			instance := left.(*std.CometInstance)
+			ev.SetField(instance, as.VarName, as.Value)
+			return std.NopInstance
+		}
+		id, ok := n.Right.(*parser.IdentifierExpression)
+		if ok {
+			instance := left.(*std.CometInstance)
+			return instance.Fields[id.Name]
+		}
 		fn, ok := n.Right.(*parser.CallExpression)
 		if !ok {
 			return std.CreateError("Used '.' operator with none function element")
@@ -522,6 +536,16 @@ func (ev *Evaluator) evalArrayAccess(arr *parser.IndexAccess) std.CometObject {
 		return std.CreateError("Array access out of bounds, array of length %d, index was: %d", arrayVal.Length, indexVal.Value)
 	}
 	return arrayVal.Values[int(indexVal.Value)]
+}
+
+func (ev *Evaluator) EvalAssignExpression(n *parser.AssignExpression) std.CometObject {
+	_, found := ev.Scope.Lookup(n.VarName)
+	if !found {
+		return std.CreateError("Identifier (%s) is not bounded to any value, have you tried declaring it?", n.VarName)
+	}
+	result := unwrap(ev.Eval(n.Value))
+	ev.Scope.Store(n.VarName, result)
+	return result
 }
 
 func applyOp(op lexer.TokenType, left std.CometObject, right std.CometObject) std.CometObject {

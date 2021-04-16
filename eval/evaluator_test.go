@@ -874,6 +874,60 @@ func TestEvaluator_Eval_EvaluateMethodCall(t *testing.T) {
 		test.AssertFunc(evaluator)
 	}
 }
+
+func TestEvaluator_Eval_EvaluateFieldSetting(t *testing.T) {
+	tests := []struct {
+		Name string
+		Src        string
+		AssertFunc func(*Evaluator)
+	}{
+		{
+			Name: "DynamicFieldSet",
+			Src: `	
+					struct A { 
+					}
+					var a = new A()
+					a.hello = 10
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				tp := assertFoundType(t, evaluator, "A")
+				s := assertFoundInScope(t, evaluator, "a", std.ObjType)
+				p, ok := s.(*std.CometInstance)
+				assert.True(t, ok)
+				assert.Equal(t, p.Struct, tp)
+				assert.Equal(t, 1, len(p.Fields))
+				v := p.Fields["hello"].(*std.CometInt)
+				assert.Equal(t, int64(10), v.Value)
+			},
+		},
+		{
+			Name: "EvaluateDynamicField",
+			Src: `	
+					struct A { 
+					}
+					var a = new A()
+					a.hello = 10
+					var c = a.hello
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				_ = assertFoundType(t, evaluator, "A")
+				s := assertFoundInScope(t, evaluator, "c", std.IntType)
+				value, ok := s.(*std.CometInt)
+				assert.True(t, ok)
+				assert.Equal(t, int64(10), value.Value)
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			evaluator := NewEvaluator()
+			rootNode := parseOrDie(test.Src)
+			evaluator.Eval(rootNode)
+			test.AssertFunc(evaluator)
+		})
+	}
+}
+
 func assertError(t *testing.T, v std.CometObject, ExpectedErrorMsg string) {
 	err, ok := v.(*std.CometError)
 	assert.True(t, ok)
