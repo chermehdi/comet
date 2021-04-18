@@ -917,6 +917,55 @@ func TestEvaluator_Eval_EvaluateFieldSetting(t *testing.T) {
 				assert.Equal(t, int64(10), value.Value)
 			},
 		},
+		{
+			Name: "EvaluateInstanceFieldInConstructor",
+			Src: `	
+					struct A { 
+						func init() {
+							this.a = 10
+            }
+					}
+          var a = new A()
+					var c = a.a
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				_ = assertFoundType(t, evaluator, "A")
+				s := assertFoundInScope(t, evaluator, "c", std.IntType)
+				value, ok := s.(*std.CometInt)
+				assert.True(t, ok)
+				assert.Equal(t, int64(10), value.Value)
+			},
+		},
+		{
+			Name: "EvaluateFieldAddInMethod",
+			Src: `	
+					struct A { 
+						func init() {
+							this.a = 10
+            }
+						func method() {
+							this.b = 42 
+            }
+					}
+          var a = new A()
+					var c = a.a
+          a.method()
+          var p = a.b
+            `,
+			AssertFunc: func(evaluator *Evaluator) {
+				_ = assertFoundType(t, evaluator, "A")
+				s := assertFoundInScope(t, evaluator, "c", std.IntType)
+				p := assertFoundInScope(t, evaluator, "p", std.IntType)
+				value, ok := s.(*std.CometInt)
+				assert.True(t, ok)
+				assert.Equal(t, int64(10), value.Value)
+
+				value, ok = p.(*std.CometInt)
+				assert.True(t, ok)
+				assert.Equal(t, int64(42), value.Value)
+			},
+		},
+
 	}
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
