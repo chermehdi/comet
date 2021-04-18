@@ -1021,3 +1021,41 @@ func assertNotFoundType(t *testing.T, ev *Evaluator, name string) {
 func parseOrDie(s string) parser.Node {
 	return parser.New(s).Parse()
 }
+
+func ExampleBuiltinPrintf() {
+	// (anouard24): I'm not pround of this
+	// but i'm still learning Golang
+	// its enough for now
+	tests := []string{
+		`printf("Hi")`,
+		`println()
+		printf("Hi %d", 2021)`,
+		`println()
+		printf("% 7d", 5)`,
+		`println()
+		printf("%s", "Test")`,
+		`println()
+		printf("%8s", "Test")`,
+		`println()
+		printf("%t", true)`,
+		`println()
+		printf("%t", false)`,
+		`println()
+		printf("%04d%9s%t", 7, "Comet ", true)`,
+	}
+	evaluator := NewEvaluator()
+	for _, test := range tests {
+		rootNode := parseOrDie(test)
+		evaluator.Eval(rootNode)
+	}
+
+	// Output:
+	// Hi
+	// Hi 2021
+	//       5
+	// Test
+	//     Test
+	// true
+	// false
+	// 0007   Comet true
+}
