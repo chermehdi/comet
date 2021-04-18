@@ -2,10 +2,11 @@ package parser
 
 import (
 	"fmt"
-	"github.com/chermehdi/comet/lexer"
+	lexer2 "github.com/chermehdi/comet/pkg/lexer"
 )
 
-// API provided for all nodes types.
+// NodeVisitor is the API provided by all nodes types.
+//
 // Implementing a visitor will allow you to traverse the AST and perform some operation (printing, testing, code generation...)
 // Without changing the Actual logic inside the AST.
 //
@@ -77,7 +78,7 @@ func (r *RootNode) Literal() string {
 }
 
 type BinaryExpression struct {
-	Op    lexer.Token
+	Op    lexer2.Token
 	Left  Expression
 	Right Expression
 }
@@ -99,7 +100,7 @@ func (e *BinaryExpression) Expr() {
 }
 
 type PrefixExpression struct {
-	Op    lexer.Token
+	Op    lexer2.Token
 	Right Expression
 }
 
@@ -160,8 +161,8 @@ func (i *IdentifierExpression) Expr() {
 }
 
 type DeclarationStatement struct {
-	varToken   lexer.Token
-	Identifier lexer.Token
+	varToken   lexer2.Token
+	Identifier lexer2.Token
 	Expression Expression
 }
 
@@ -178,7 +179,7 @@ func (d *DeclarationStatement) Statement() {
 }
 
 type ReturnStatement struct {
-	returnToken lexer.Token
+	returnToken lexer2.Token
 	Expression  Expression
 }
 
@@ -196,7 +197,7 @@ func (d *ReturnStatement) Statement() {
 
 type BooleanLiteral struct {
 	ActualValue bool
-	Token       lexer.Token
+	Token       lexer2.Token
 }
 
 func (b *BooleanLiteral) Literal() string {
