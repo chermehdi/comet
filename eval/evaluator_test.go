@@ -877,7 +877,7 @@ func TestEvaluator_Eval_EvaluateMethodCall(t *testing.T) {
 
 func TestEvaluator_Eval_EvaluateFieldSetting(t *testing.T) {
 	tests := []struct {
-		Name string
+		Name       string
 		Src        string
 		AssertFunc func(*Evaluator)
 	}{
@@ -965,7 +965,6 @@ func TestEvaluator_Eval_EvaluateFieldSetting(t *testing.T) {
 				assert.Equal(t, int64(42), value.Value)
 			},
 		},
-
 	}
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {

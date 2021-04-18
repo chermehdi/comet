@@ -12,10 +12,6 @@ type Evaluator struct {
 	Scope    *Scope
 	Builtins map[string]*std.Builtin
 	Types    map[string]*std.CometStruct
-	// This is only set if we are in the middle of a field access operation
-	// the underlying assignments will use this flag to decide on whether to error on unknown variable assignments
-	// or to create new ones and giving them back to the struct in scope.
-	CurStruct *std.CometStruct
 }
 
 // Param is a named parameter within the interpreter
