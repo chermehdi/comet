@@ -7,13 +7,15 @@ import (
 	"strings"
 )
 
+// Lower binds stronger
 const (
-	MINIMUM = 0
-	LOG     = 1
-	ADD     = 1
-	MUL     = 2
-	PARENT  = 3
-	Index   = 4
+	MINIMUM = iota
+	LOG
+	ADD
+	MUL
+	DOT
+	PARENT
+	Index
 )
 
 var precedences = map[lexer.TokenType]int{
@@ -27,6 +29,7 @@ var precedences = map[lexer.TokenType]int{
 	lexer.GTE:         LOG,
 	lexer.EQ:          LOG,
 	lexer.NEQ:         LOG,
+	lexer.Dot:         DOT,
 	lexer.DotDot:      PARENT,
 	lexer.OpenBracket: Index,
 }
@@ -125,10 +128,11 @@ func (p *Parser) init() {
 	p.registerPrefixFunc(p.parseParenthesisedExpression, lexer.OpenParent)
 	p.registerPrefixFunc(p.parseStringLiteral, lexer.String)
 	p.registerPrefixFunc(p.parseArrayLiteral, lexer.OpenBracket)
+	p.registerPrefixFunc(p.parseNewCall, lexer.New)
 
 	p.registerBinaryFunc(p.parseArrayAccess, lexer.OpenBracket)
 	p.registerBinaryFunc(p.parseBinaryExpression, lexer.Plus, lexer.Mul, lexer.Minus, lexer.Div,
-		lexer.GT, lexer.GTE, lexer.LT, lexer.LTE, lexer.EQ, lexer.NEQ, lexer.DotDot)
+		lexer.GT, lexer.GTE, lexer.LT, lexer.LTE, lexer.EQ, lexer.NEQ, lexer.Dot, lexer.DotDot)
 }
 
 // Utility method to enable prefix function registration for given token types.
@@ -494,4 +498,12 @@ func (p *Parser) parseStructDeclaration() Statement {
 	}
 	structDec.Methods = functions
 	return structDec
+}
+
+func (p *Parser) parseNewCall() Expression {
+	p.expectNext(lexer.Identifier)
+	callExpr := &NewCallExpr{Type: p.CurrentToken.Literal}
+	p.advance() // skip the type declaration
+	callExpr.Args = p.parseCallArguments()
+	return callExpr
 }

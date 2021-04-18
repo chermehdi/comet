@@ -26,6 +26,16 @@ func (t *TestingVisitor) VisitStructDeclaration(statement StructDeclarationState
 	}
 }
 
+func (t *TestingVisitor) VisitNewCall(newExpr NewCallExpr) {
+	currentNode := t.expected[t.ptr]
+	_, isNew := currentNode.(*NewCallExpr)
+	assert.True(t.t, isNew)
+	t.ptr++
+	for _, ex := range newExpr.Args {
+		ex.Accept(t)
+	}
+}
+
 func (t *TestingVisitor) VisitArrayAccess(access IndexAccess) {
 	currentNode := t.expected[t.ptr]
 	_, isIndexAccess := currentNode.(*IndexAccess)
@@ -1086,6 +1096,7 @@ func TestParser_Parse_ParseArrayLiteral(t *testing.T) {
 		rootNode.Accept(testingVisitor)
 	}
 }
+
 func TestParser_Parse_ParseStructDeclaration(t *testing.T) {
 	tests := []struct {
 		Expr     string
@@ -1158,5 +1169,69 @@ func TestParser_Parse_ParseStructDeclaration(t *testing.T) {
 			t:        t,
 		}
 		rootNode.Accept(testingVisitor)
+	}
+}
+
+func TestParser_Parse_ParseNewCall(t *testing.T) {
+	tests := []struct {
+		Expr     string
+		Expected []Node
+	}{
+		{
+			Expr: `
+		 var a = new Data()
+		 `,
+			Expected: []Node{
+				&DeclarationStatement{
+					Identifier: lexer.Token{Literal: "a"},
+				},
+				&NewCallExpr{
+					Type: "Data",
+				},
+			},
+		},
+		{
+			Expr: `
+		 var a = new Data(10, "foo")
+		 `,
+			Expected: []Node{
+				&DeclarationStatement{
+					Identifier: lexer.Token{Literal: "a"},
+				},
+				&NewCallExpr{
+					Type: "Data",
+				},
+				&NumberLiteral{ActualValue: 10},
+				&StringLiteral{Value: "foo"},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		parser := New(test.Expr)
+		rootNode := parser.Parse()
+		assert.NotNil(t, rootNode)
+		assert.False(t, parser.Errors.HasAny())
+
+		testingVisitor := &TestingVisitor{
+			expected: test.Expected,
+			ptr:      0,
+			t:        t,
+		}
+		rootNode.Accept(testingVisitor)
+	}
+}
+
+func TestParser_Parse_ErrorNewCall(t *testing.T) {
+	tests := []string{
+		`var a = new S`,
+		`var a = new`,
+		`var c = new ()`,
+	}
+	for _, test := range tests {
+		parser := New(test)
+		rootNode := parser.Parse()
+		assert.NotNil(t, rootNode)
+		assert.True(t, parser.Errors.HasAny())
 	}
 }

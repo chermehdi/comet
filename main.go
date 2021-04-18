@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/chermehdi/comet/debug"
 	"github.com/chermehdi/comet/eval"
 	"github.com/chermehdi/comet/parser"
 	"github.com/chermehdi/comet/repl"
@@ -23,7 +24,8 @@ author : @chermehdi
 version: %s 
 `, VERSION)
 
-var filePath = flag.String("file", "", "File to run")
+var filePath = flag.String("file", "", "Path to the file to run")
+var printAst = flag.Bool("debug", false, "Print the ast of the given file")
 
 func main() {
 	flag.Parse()
@@ -43,6 +45,11 @@ func main() {
 		if p.Errors.HasAny() {
 			fmt.Println(p.Errors)
 			return
+		}
+		if *printAst {
+			p := &debug.PrintingVisitor{}
+			p.VisitRootNode(*rootNode)
+			fmt.Println(p)
 		}
 		evaluator := eval.NewEvaluator()
 		evaluator.Eval(rootNode)

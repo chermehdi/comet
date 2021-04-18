@@ -14,7 +14,13 @@ type Evaluator struct {
 	Types    map[string]*std.CometStruct
 }
 
-// Constructs a new evaluator
+// Param is a named parameter within the interpreter
+type Param struct {
+	Name string
+	Val  std.CometObject
+}
+
+// NewEvaluator Constructs a new evaluator
 // Each constructed evaluator has it's own Scope, i.e variables accessible from one Evaluator
 // Are not accessible from another one.
 func NewEvaluator() *Evaluator {
@@ -132,19 +138,15 @@ func (ev *Evaluator) Eval(node parser.Node) std.CometObject {
 		result := ev.evalCallExpression(n)
 		return unwrap(result)
 	case *parser.AssignExpression:
-		_, found := ev.Scope.Lookup(n.VarName)
-		if !found {
-			return std.CreateError("Identifier (%s) is not bounded to any value, have you tried declaring it?", n.VarName)
-		}
-		result := unwrap(ev.Eval(n.Value))
-		ev.Scope.Store(n.VarName, result)
-		return result
+		return ev.EvalAssignExpression(n)
 	case *parser.IndexAccess:
 		return ev.evalArrayAccess(n)
 	case *parser.ForStatement:
 		return unwrap(ev.evalForStatement(n))
 	case *parser.StructDeclarationStatement:
 		return ev.evalStructDecl(n)
+	case *parser.NewCallExpr:
+		return ev.evalNewCall(n)
 	}
 	return std.NopInstance
 }
@@ -155,6 +157,57 @@ func unwrap(result std.CometObject) std.CometObject {
 		return unwrapped.Value
 	}
 	return result
+}
+
+func (ev *Evaluator) evalNewCall(expr *parser.NewCallExpr) std.CometObject {
+	t, found := ev.Types[expr.Type]
+	if !found {
+		return std.CreateError("Type '%s' not found", expr.Type)
+	}
+	instance := std.NewInstance(t)
+	params := make([]Param, len(expr.Args))
+	constructor, found := t.GetConstructor()
+
+	if !found {
+		if len(expr.Args) > 0 {
+			return std.CreateError("Cannot find a defined constructor on the '%s' type, make sure to define an 'init' method on the struct", t.Name)
+		}
+		// it's okay to create a struct instance with no explicit constructor, if the constructor call didn't specify a parameter
+		return instance
+	}
+
+	for i, param := range expr.Args {
+		v := ev.Eval(param)
+		if v.Type() == std.ErrorType {
+			return v
+		}
+		params[i] = Param{
+			Name: constructor.Params[i].Name,
+			Val:  v,
+		}
+	}
+	res := ev.callOnObject("init", instance, params...)
+	if res.Type() == std.ErrorType {
+		return res
+	}
+	return instance
+}
+
+func (ev *Evaluator) callOnObject(name string, object *std.CometInstance, params ...Param) std.CometObject {
+	constructor, found := object.Struct.Methods[name]
+	if found {
+		callSiteScope := NewScope(ev.Scope)
+		callSiteScope.Variables["this"] = object
+		for _, p := range params {
+			callSiteScope.Variables[p.Name] = p.Val
+		}
+		oldScope := ev.Scope
+		ev.Scope = callSiteScope
+		res := ev.Eval(constructor.Body)
+		ev.Scope = oldScope
+		return unwrap(res)
+	}
+	return std.CreateError("Method '%s' Not found on instance of type '%s'", name, object.Struct.Name)
 }
 
 func (ev *Evaluator) evalRootNode(statements []parser.Statement) std.CometObject {
@@ -178,7 +231,7 @@ func (ev *Evaluator) evalStructDecl(decl *parser.StructDeclarationStatement) std
 	//   - Scope the methods definitions with the struct declaration.
 	//   - Register in the global scope with the a "cheeky naming scheme" -->
 	//   Looks hacky
-	s := &std.CometStruct{Name: decl.Name, Methods: make([]*std.CometFunc, 0)}
+	s := &std.CometStruct{Name: decl.Name, Methods: make(map[string]*std.CometFunc, 0)}
 
 	for _, m := range decl.Methods {
 		fn := &std.CometFunc{
@@ -237,10 +290,66 @@ func (ev *Evaluator) evalPrefixExpression(n *parser.PrefixExpression) std.CometO
 	}
 }
 
+func (ev *Evaluator) SetField(instance *std.CometInstance, name string, value parser.Expression) {
+	val := ev.Eval(value)
+	instance.Fields[name] = val
+}
+
 func (ev *Evaluator) evalBinaryExpression(n *parser.BinaryExpression) std.CometObject {
 	left := ev.Eval(n.Left)
 	if isError(left) {
 		return left
+	}
+
+	// Prioritize the dot operation
+	if n.Op.Type == lexer.Dot {
+		as, ok := n.Right.(*parser.AssignExpression)
+		if ok {
+			instance := left.(*std.CometInstance)
+			ev.SetField(instance, as.VarName, as.Value)
+			return std.NopInstance
+		}
+		id, ok := n.Right.(*parser.IdentifierExpression)
+		if ok {
+			instance := left.(*std.CometInstance)
+			return instance.Fields[id.Name]
+		}
+		fn, ok := n.Right.(*parser.CallExpression)
+		if !ok {
+			return std.CreateError("Used '.' operator with none function element")
+		}
+		if left.Type() != std.ObjType {
+			// You can't call methods on none object types
+			return std.CreateError("Cannot call method '%s' on none object type", fn.Name)
+		}
+
+		instance := left.(*std.CometInstance)
+		method, found := instance.Struct.GetMethod(fn.Name)
+
+		if !found {
+			return std.CreateError("Could not find method '%s' on type '%s'", fn.Name, instance.Struct.Name)
+		}
+
+		params := make([]Param, len(fn.Arguments))
+		if len(method.Params) > len(fn.Arguments) {
+			return std.CreateError("Method '%s' on type '%s' expects at least %d parameters, %d were given",
+				method.Name,
+				instance.Struct.Name,
+				len(method.Params),
+				len(fn.Arguments))
+		}
+
+		for i, p := range method.Params {
+			v := ev.Eval(fn.Arguments[i])
+			if v.Type() == std.ErrorType {
+				return v
+			}
+			params[i] = Param{
+				Name: p.Name,
+				Val:  v,
+			}
+		}
+		return ev.callOnObject(fn.Name, instance, params...)
 	}
 
 	right := ev.Eval(n.Right)
@@ -308,7 +417,7 @@ func (ev *Evaluator) evalDeclareStatement(n *parser.DeclarationStatement) std.Co
 	// TODO(chermehdi): add a shadowing diagnostic message if the store is overriding
 	// an existing variable
 	ev.Scope.Declare(n.Identifier.Literal, value)
-	return std.NopInstance
+	return value
 }
 
 func (ev *Evaluator) evalIdentifier(n *parser.IdentifierExpression) std.CometObject {
@@ -423,6 +532,16 @@ func (ev *Evaluator) evalArrayAccess(arr *parser.IndexAccess) std.CometObject {
 		return std.CreateError("Array access out of bounds, array of length %d, index was: %d", arrayVal.Length, indexVal.Value)
 	}
 	return arrayVal.Values[int(indexVal.Value)]
+}
+
+func (ev *Evaluator) EvalAssignExpression(n *parser.AssignExpression) std.CometObject {
+	_, found := ev.Scope.Lookup(n.VarName)
+	if !found {
+		return std.CreateError("Identifier (%s) is not bounded to any value, have you tried declaring it?", n.VarName)
+	}
+	result := unwrap(ev.Eval(n.Value))
+	ev.Scope.Store(n.VarName, result)
+	return result
 }
 
 func applyOp(op lexer.TokenType, left std.CometObject, right std.CometObject) std.CometObject {

@@ -18,6 +18,7 @@ const (
 	FuncType      = "FUNCTION"
 	ErrorType     = "ERROR"
 	RangeType     = "RANGE"
+	ObjType       = "OBJECT"
 	ReturnWrapper = "ReturnWrapper"
 	Nop           = "NOP"
 )
@@ -162,22 +163,63 @@ func CreateError(s string, params ...interface{}) CometObject {
 }
 
 // CometStruct represents a struct declaration in the comet language.
+// Top level declaration
 type CometStruct struct {
 	Name    string
-	Methods []*CometFunc
+	Methods map[string]*CometFunc
 }
 
 // Add adds a method to a struct with performing sanity checks according to the
 // language rules.
 func (s *CometStruct) Add(fn *CometFunc) error {
-	for _, m := range s.Methods {
-		if m.Name == fn.Name {
-			// As Comet is not typed it does not make sense to have method overloading
-			// as A(1, 2) is equivalenet to A(1, 2, "") because no argument checking
-			// is performed in the current implementation.
-			return errors.New(fmt.Sprintf("Method already exist with the name '%s' on '%s' struct", m.Name, s.Name))
-		}
+	// As Comet is not typed it does not make sense to have method overloading
+	// as A(1, 2) is equivalenet to A(1, 2, "") because no argument checking
+	// is performed in the current implementation.
+	_, found := s.Methods[fn.Name]
+	if found {
+		return errors.New(fmt.Sprintf("Method already exist with the name '%s' on '%s' struct", fn.Name, s.Name))
 	}
-	s.Methods = append(s.Methods, fn)
+	s.Methods[fn.Name] = fn
 	return nil
+}
+
+// GetConstructor returns the CometFunc coresponding to the constructor of this
+// type declaration.
+// This should only be used at first time creating an instance of this type.
+func (s *CometStruct) GetConstructor() (*CometFunc, bool) {
+	return s.GetMethod("init")
+}
+
+// GetMethod return the CometFunc name with name
+// The second parameter is `false` if the method is not found
+func (s *CometStruct) GetMethod(name string) (*CometFunc, bool) {
+	fn, found := s.Methods[name]
+	return fn, found
+}
+// CometInstance is the object created from a given `Type`
+type CometInstance struct {
+	// Struct is the type definition for the given instance
+	// every method on the struct declaration should take the current instance
+	// as the this pointer reference.
+	Struct *CometStruct
+	// Fields represent the struct's state
+	// Fields could be added at any point since this is a dynamic language
+	Fields map[string]CometObject
+}
+
+func (c *CometInstance) Type() CometType {
+	return ObjType
+}
+
+func (c *CometInstance) ToString() string {
+	// TODO: delegate to some special method on the Type declaration
+	return fmt.Sprintf("CometInstance(Type=%s)", c.Struct.Name)
+}
+
+// NewInstance creates a new comet object
+func NewInstance(typeDec *CometStruct) *CometInstance {
+	return &CometInstance{
+		Struct: typeDec,
+		Fields: make(map[string]CometObject, 0),
+	}
 }

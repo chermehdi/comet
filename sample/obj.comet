@@ -1,0 +1,15 @@
+var aa = 10
+
+struct A { 
+  func init() {
+    var dd = 12
+    printf("%d\n", aa)
+    println("In the constructor")
+    this.hello = dd
+  }
+}
+
+var a = new A()
+
+println(a)
+println(a.hello)
