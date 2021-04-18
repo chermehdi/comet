@@ -3,17 +3,15 @@ package repl
 import (
 	"bufio"
 	"fmt"
-	"github.com/chermehdi/comet/eval"
-	"github.com/chermehdi/comet/parser"
+	eval2 "github.com/chermehdi/comet/pkg/eval"
+	parser2 "github.com/chermehdi/comet/pkg/parser"
 	"io"
 	"strings"
 )
 
-type Repl struct{}
-
-func (r *Repl) Start(reader io.Reader, writer io.Writer) {
+func Start(reader io.Reader, writer io.Writer) {
 	scanner := bufio.NewScanner(reader)
-	evaluator := eval.NewEvaluator()
+	evaluator := eval2.NewEvaluator()
 
 	for {
 		fmt.Fprint(writer, ">> ")
@@ -34,7 +32,7 @@ func (r *Repl) Start(reader io.Reader, writer io.Writer) {
 				continue
 			}
 		}
-		p := parser.New(line)
+		p := parser2.New(line)
 		rootNode := p.Parse()
 		if p.Errors.HasAny() {
 			fmt.Fprintln(writer, p.Errors)
@@ -47,7 +45,7 @@ func (r *Repl) Start(reader io.Reader, writer io.Writer) {
 	}
 }
 
-func printScope(eval *eval.Evaluator) {
+func printScope(eval *eval2.Evaluator) {
 	fmt.Println("==== Variables ====")
 	scope := eval.Scope
 	for cur := scope; cur != nil; cur = cur.Parent {

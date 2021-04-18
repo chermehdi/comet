@@ -2,7 +2,7 @@ package parser
 
 import (
 	"fmt"
-	"github.com/chermehdi/comet/lexer"
+	"github.com/chermehdi/comet/pkg/lexer"
 	"strconv"
 	"strings"
 )
@@ -93,7 +93,7 @@ type binaryParseFunction func(Expression) Expression
 type prefixParseFunction func() Expression
 
 type Parser struct {
-	lexer *lexer.Lexer
+	lex *lexer.Lexer
 
 	CurrentToken lexer.Token
 	NextToken    lexer.Token
@@ -106,7 +106,7 @@ type Parser struct {
 func New(src string) *Parser {
 	lex := lexer.NewLexer(src)
 	parser := &Parser{
-		lexer:  lex,
+		lex:    lex,
 		Errors: newErrorBag(),
 	}
 	parser.init()
@@ -121,6 +121,7 @@ func (p *Parser) init() {
 	p.prefixFuncs = make(map[lexer.TokenType]prefixParseFunction)
 	p.binaryFuncs = make(map[lexer.TokenType]binaryParseFunction)
 
+	// Register functions to parse all operators that are of the form `op expresion`
 	p.registerPrefixFunc(p.parseNumberLiteral, lexer.Number)
 	p.registerPrefixFunc(p.parsePrefixExpression, lexer.Minus, lexer.Bang)
 	p.registerPrefixFunc(p.parseIdentifier, lexer.Identifier)
@@ -130,6 +131,8 @@ func (p *Parser) init() {
 	p.registerPrefixFunc(p.parseArrayLiteral, lexer.OpenBracket)
 	p.registerPrefixFunc(p.parseNewCall, lexer.New)
 
+	// Register functions to parse all operators that are of the form `expression op expresion`
+	p.registerPrefixFunc(p.parseNumberLiteral, lexer.Number)
 	p.registerBinaryFunc(p.parseArrayAccess, lexer.OpenBracket)
 	p.registerBinaryFunc(p.parseBinaryExpression, lexer.Plus, lexer.Mul, lexer.Minus, lexer.Div,
 		lexer.GT, lexer.GTE, lexer.LT, lexer.LTE, lexer.EQ, lexer.NEQ, lexer.Dot, lexer.DotDot)
@@ -152,7 +155,7 @@ func (p *Parser) registerBinaryFunc(fun binaryParseFunction, tokenTypes ...lexer
 // Changes the current token to the next token.
 func (p *Parser) advance() {
 	p.CurrentToken = p.NextToken
-	p.NextToken = p.lexer.Next()
+	p.NextToken = p.lex.Next()
 }
 
 // Parse the program and return a RootNode representing the root of the AST.

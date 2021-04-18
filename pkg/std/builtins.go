@@ -66,7 +66,7 @@ var Builtins = []*Builtin{
 	},
 }
 
-// Standard library to convert any object type to a string value.
+// ToString is the standard library's way to convert any object type to a string value.
 // Newly added types should add their string conversion implementation as well.
 func ToString(object CometObject) *CometStr {
 	switch n := object.(type) {

@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/chermehdi/comet/parser"
+	parser2 "github.com/chermehdi/comet/pkg/parser"
 )
 
-// Type alias mapping some strings to types
+// CometType is a type alias mapping some strings to types
 type CometType string
 
 const (
@@ -23,13 +23,12 @@ const (
 	Nop           = "NOP"
 )
 
-// Every object (or primitive) in the comet programming language will be representated
-// As an instance of this interface.
+// CometObject represents Every object (or primitive) in the comet programming language.
 type CometObject interface {
-	// Returns the type of this instance, see CometType for details about available/possible types
+	// Type returns the type of this instance, see CometType for details about available/possible types
 	Type() CometType
 
-	// A string representation For Debugging / REPL purposes
+	// ToString returns a string representation For Debugging / REPL purposes
 	ToString() string
 }
 
@@ -129,8 +128,8 @@ func (c *CometReturnWrapper) ToString() string {
 
 type CometFunc struct {
 	Name   string
-	Params []*parser.IdentifierExpression
-	Body   *parser.BlockStatement
+	Params []*parser2.IdentifierExpression
+	Body   *parser2.BlockStatement
 }
 
 func (c *CometFunc) Type() CometType {

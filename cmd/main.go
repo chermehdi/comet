@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/chermehdi/comet/debug"
-	"github.com/chermehdi/comet/eval"
-	"github.com/chermehdi/comet/parser"
-	"github.com/chermehdi/comet/repl"
+	"github.com/chermehdi/comet/cmd/repl"
+	"github.com/chermehdi/comet/pkg/debug"
+	eval2 "github.com/chermehdi/comet/pkg/eval"
+	parser2 "github.com/chermehdi/comet/pkg/parser"
 	"io/ioutil"
 	"os"
 )
@@ -40,7 +40,7 @@ func main() {
 			fmt.Println("Could not read passed file")
 			return
 		}
-		p := parser.New(string(source))
+		p := parser2.New(string(source))
 		rootNode := p.Parse()
 		if p.Errors.HasAny() {
 			fmt.Println(p.Errors)
@@ -51,12 +51,11 @@ func main() {
 			p.VisitRootNode(*rootNode)
 			fmt.Println(p)
 		}
-		evaluator := eval.NewEvaluator()
+		evaluator := eval2.NewEvaluator()
 		evaluator.Eval(rootNode)
 	} else {
 		// REPL MODE
 		fmt.Print(BANNER)
-		repler := repl.Repl{}
-		repler.Start(os.Stdin, os.Stdout)
+		repl.Start(os.Stdin, os.Stdout)
 	}
 }

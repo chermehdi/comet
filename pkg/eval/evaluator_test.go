@@ -2,11 +2,11 @@ package eval
 
 import (
 	"fmt"
+	parser2 "github.com/chermehdi/comet/pkg/parser"
+	std2 "github.com/chermehdi/comet/pkg/std"
 	"math"
 	"testing"
 
-	"github.com/chermehdi/comet/parser"
-	"github.com/chermehdi/comet/std"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -254,8 +254,8 @@ func TestEvaluator_Eval_Declarations(t *testing.T) {
 			Src: `var a = 1
 				`,
 			AssertFunc: func(ev *Evaluator) {
-				a := assertFoundInScope(t, ev, "a", std.IntType)
-				aValue := a.(*std.CometInt)
+				a := assertFoundInScope(t, ev, "a", std2.IntType)
+				aValue := a.(*std2.CometInt)
 				assert.Equal(t, int64(1), aValue.Value)
 			},
 		},
@@ -263,8 +263,8 @@ func TestEvaluator_Eval_Declarations(t *testing.T) {
 			Src: `var a = 1 * 2 + 1
 				`,
 			AssertFunc: func(ev *Evaluator) {
-				a := assertFoundInScope(t, ev, "a", std.IntType)
-				aValue := a.(*std.CometInt)
+				a := assertFoundInScope(t, ev, "a", std2.IntType)
+				aValue := a.(*std2.CometInt)
 				assert.Equal(t, int64(3), aValue.Value)
 			},
 		},
@@ -275,16 +275,16 @@ func TestEvaluator_Eval_Declarations(t *testing.T) {
 				 var d = a * c
 				`,
 			AssertFunc: func(ev *Evaluator) {
-				a := assertFoundInScope(t, ev, "a", std.IntType)
-				aValue := a.(*std.CometInt)
+				a := assertFoundInScope(t, ev, "a", std2.IntType)
+				aValue := a.(*std2.CometInt)
 				assert.Equal(t, int64(3), aValue.Value)
 
-				c := assertFoundInScope(t, ev, "c", std.IntType)
-				cValue := c.(*std.CometInt)
+				c := assertFoundInScope(t, ev, "c", std2.IntType)
+				cValue := c.(*std2.CometInt)
 				assert.Equal(t, int64(10), cValue.Value)
 
-				d := assertFoundInScope(t, ev, "d", std.IntType)
-				dValue := d.(*std.CometInt)
+				d := assertFoundInScope(t, ev, "d", std2.IntType)
+				dValue := d.(*std2.CometInt)
 				assert.Equal(t, int64(30), dValue.Value)
 			},
 		},
@@ -292,8 +292,8 @@ func TestEvaluator_Eval_Declarations(t *testing.T) {
 			Src: `var a = "Hello world!"
 				`,
 			AssertFunc: func(ev *Evaluator) {
-				a := assertFoundInScope(t, ev, "a", std.StrType)
-				aValue := a.(*std.CometStr)
+				a := assertFoundInScope(t, ev, "a", std2.StrType)
+				aValue := a.(*std2.CometStr)
 				assert.Equal(t, "Hello world!", aValue.Value)
 				assert.Equal(t, 12, aValue.Size)
 			},
@@ -342,8 +342,8 @@ func TestEvaluator_Eval_StringOperations(t *testing.T) {
 		{
 			Src: `var a = "Hello " + "world!"`,
 			AssertFunc: func(ev *Evaluator) {
-				a := assertFoundInScope(t, ev, "a", std.StrType)
-				aValue := a.(*std.CometStr)
+				a := assertFoundInScope(t, ev, "a", std2.StrType)
+				aValue := a.(*std2.CometStr)
 				assert.Equal(t, "Hello world!", aValue.Value)
 				assert.Equal(t, 12, aValue.Size)
 			},
@@ -354,13 +354,13 @@ func TestEvaluator_Eval_StringOperations(t *testing.T) {
 				var b = 3 * "Hello"
 			`,
 			AssertFunc: func(ev *Evaluator) {
-				a := assertFoundInScope(t, ev, "a", std.StrType)
-				aValue := a.(*std.CometStr)
+				a := assertFoundInScope(t, ev, "a", std2.StrType)
+				aValue := a.(*std2.CometStr)
 				assert.Equal(t, "HelloHelloHello", aValue.Value)
 				assert.Equal(t, 15, aValue.Size)
 
-				b := assertFoundInScope(t, ev, "b", std.StrType)
-				bValue := b.(*std.CometStr)
+				b := assertFoundInScope(t, ev, "b", std2.StrType)
+				bValue := b.(*std2.CometStr)
 				assert.Equal(t, "HelloHelloHello", bValue.Value)
 				assert.Equal(t, 15, bValue.Size)
 			},
@@ -373,23 +373,23 @@ func TestEvaluator_Eval_StringOperations(t *testing.T) {
 				var d = "Hello" + false
 			`,
 			AssertFunc: func(ev *Evaluator) {
-				a := assertFoundInScope(t, ev, "a", std.StrType)
-				aValue := a.(*std.CometStr)
+				a := assertFoundInScope(t, ev, "a", std2.StrType)
+				aValue := a.(*std2.CometStr)
 				assert.Equal(t, "Hellotrue", aValue.Value)
 				assert.Equal(t, 9, aValue.Size)
 
-				b := assertFoundInScope(t, ev, "b", std.StrType)
-				bValue := b.(*std.CometStr)
+				b := assertFoundInScope(t, ev, "b", std2.StrType)
+				bValue := b.(*std2.CometStr)
 				assert.Equal(t, "trueHello", bValue.Value)
 				assert.Equal(t, 9, bValue.Size)
 
-				c := assertFoundInScope(t, ev, "c", std.StrType)
-				cValue := c.(*std.CometStr)
+				c := assertFoundInScope(t, ev, "c", std2.StrType)
+				cValue := c.(*std2.CometStr)
 				assert.Equal(t, "falseHello", cValue.Value)
 				assert.Equal(t, 9, cValue.Size)
 
-				d := assertFoundInScope(t, ev, "d", std.StrType)
-				dValue := d.(*std.CometStr)
+				d := assertFoundInScope(t, ev, "d", std2.StrType)
+				dValue := d.(*std2.CometStr)
 				assert.Equal(t, "Hellofalse", dValue.Value)
 				assert.Equal(t, 9, dValue.Size)
 			},
@@ -400,13 +400,13 @@ func TestEvaluator_Eval_StringOperations(t *testing.T) {
 				var b = 42 + "Hello"
 				`,
 			AssertFunc: func(ev *Evaluator) {
-				a := assertFoundInScope(t, ev, "a", std.StrType)
-				aValue := a.(*std.CometStr)
+				a := assertFoundInScope(t, ev, "a", std2.StrType)
+				aValue := a.(*std2.CometStr)
 				assert.Equal(t, "Hello42", aValue.Value)
 				assert.Equal(t, 7, aValue.Size)
 
-				b := assertFoundInScope(t, ev, "b", std.StrType)
-				bValue := b.(*std.CometStr)
+				b := assertFoundInScope(t, ev, "b", std2.StrType)
+				bValue := b.(*std2.CometStr)
 				assert.Equal(t, "42Hello", bValue.Value)
 				assert.Equal(t, 7, bValue.Size)
 			},
@@ -431,16 +431,16 @@ func TestEvaluator_Eval_FunctionDeclarationTest(t *testing.T) {
 				var c = a()	
             `,
 			AssertFunc: func(evaluator *Evaluator) {
-				obj := assertFoundInScope(t, evaluator, "a", std.FuncType)
-				function, _ := obj.(*std.CometFunc)
+				obj := assertFoundInScope(t, evaluator, "a", std2.FuncType)
+				function, _ := obj.(*std2.CometFunc)
 				assert.Len(t, function.Params, 0)
 			},
 		},
 		{
 			Src: `func a(p1, p2) {}`,
 			AssertFunc: func(evaluator *Evaluator) {
-				obj := assertFoundInScope(t, evaluator, "a", std.FuncType)
-				function, _ := obj.(*std.CometFunc)
+				obj := assertFoundInScope(t, evaluator, "a", std2.FuncType)
+				function, _ := obj.(*std2.CometFunc)
 				assert.Len(t, function.Params, 2)
 				assert.Equal(t, "p1", function.Params[0].Name)
 				assert.Equal(t, "p2", function.Params[1].Name)
@@ -465,9 +465,9 @@ func TestEvaluator_Eval_FunctionCallTest(t *testing.T) {
 				var c = a()	
             `,
 			AssertFunc: func(evaluator *Evaluator) {
-				assertFoundInScope(t, evaluator, "a", std.FuncType)
-				c := assertFoundInScope(t, evaluator, "c", std.IntType)
-				value := c.(*std.CometInt)
+				assertFoundInScope(t, evaluator, "a", std2.FuncType)
+				c := assertFoundInScope(t, evaluator, "c", std2.IntType)
+				value := c.(*std2.CometInt)
 				assert.Equal(t, int64(1), value.Value)
 			},
 		},
@@ -477,10 +477,10 @@ func TestEvaluator_Eval_FunctionCallTest(t *testing.T) {
                 var c = b(2, a)
             `,
 			AssertFunc: func(evaluator *Evaluator) {
-				assertFoundInScope(t, evaluator, "a", std.FuncType)
-				assertFoundInScope(t, evaluator, "b", std.FuncType)
-				c := assertFoundInScope(t, evaluator, "c", std.IntType)
-				value := c.(*std.CometInt)
+				assertFoundInScope(t, evaluator, "a", std2.FuncType)
+				assertFoundInScope(t, evaluator, "b", std2.FuncType)
+				c := assertFoundInScope(t, evaluator, "c", std2.IntType)
+				value := c.(*std2.CometInt)
 				assert.Equal(t, int64(2), value.Value)
 			},
 		},
@@ -492,12 +492,12 @@ func TestEvaluator_Eval_FunctionCallTest(t *testing.T) {
 				var comp = c1 == c2
             `,
 			AssertFunc: func(evaluator *Evaluator) {
-				assertFoundInScope(t, evaluator, "a", std.FuncType)
-				assertFoundInScope(t, evaluator, "b", std.FuncType)
-				assertFoundInScope(t, evaluator, "c1", std.IntType)
-				assertFoundInScope(t, evaluator, "c2", std.IntType)
-				comp := assertFoundInScope(t, evaluator, "comp", std.BoolType)
-				value := comp.(*std.CometBool)
+				assertFoundInScope(t, evaluator, "a", std2.FuncType)
+				assertFoundInScope(t, evaluator, "b", std2.FuncType)
+				assertFoundInScope(t, evaluator, "c1", std2.IntType)
+				assertFoundInScope(t, evaluator, "c2", std2.IntType)
+				comp := assertFoundInScope(t, evaluator, "comp", std2.BoolType)
+				value := comp.(*std2.CometBool)
 				assert.Equal(t, true, value.Value)
 			},
 		},
@@ -525,8 +525,8 @@ func TestEvaluator_Eval_EvaluateForStatement(t *testing.T) {
 				}
             `,
 			AssertFunc: func(evaluator *Evaluator) {
-				a := assertFoundInScope(t, evaluator, "a", std.IntType)
-				value := a.(*std.CometInt)
+				a := assertFoundInScope(t, evaluator, "a", std2.IntType)
+				value := a.(*std2.CometInt)
 				assert.Equal(t, int64(19), value.Value)
 			},
 		},
@@ -549,8 +549,8 @@ func TestEvaluator_Eval_EvaluateArrayDeclaration(t *testing.T) {
 				var a = []
             `,
 			AssertFunc: func(evaluator *Evaluator) {
-				a := assertFoundInScope(t, evaluator, "a", std.ArrayType)
-				array := a.(*std.CometArray)
+				a := assertFoundInScope(t, evaluator, "a", std2.ArrayType)
+				array := a.(*std2.CometArray)
 				assert.Equal(t, 0, array.Length)
 			},
 		},
@@ -559,8 +559,8 @@ func TestEvaluator_Eval_EvaluateArrayDeclaration(t *testing.T) {
 				var a = [1, 2, 3]
             `,
 			AssertFunc: func(evaluator *Evaluator) {
-				a := assertFoundInScope(t, evaluator, "a", std.ArrayType)
-				array := a.(*std.CometArray)
+				a := assertFoundInScope(t, evaluator, "a", std2.ArrayType)
+				array := a.(*std2.CometArray)
 				assert.Equal(t, 3, array.Length)
 
 				assertInteger(t, array.Values[0], 1)
@@ -573,18 +573,18 @@ func TestEvaluator_Eval_EvaluateArrayDeclaration(t *testing.T) {
 				var a = [[], [1, 2]]
             `,
 			AssertFunc: func(evaluator *Evaluator) {
-				a := assertFoundInScope(t, evaluator, "a", std.ArrayType)
-				array := a.(*std.CometArray)
+				a := assertFoundInScope(t, evaluator, "a", std2.ArrayType)
+				array := a.(*std2.CometArray)
 				assert.Equal(t, 2, array.Length)
 
-				assert.True(t, array.Values[0].Type() == std.ArrayType)
+				assert.True(t, array.Values[0].Type() == std2.ArrayType)
 
-				arrv0 := array.Values[0].(*std.CometArray)
+				arrv0 := array.Values[0].(*std2.CometArray)
 				assert.Equal(t, 0, arrv0.Length)
 
-				assert.True(t, array.Values[1].Type() == std.ArrayType)
+				assert.True(t, array.Values[1].Type() == std2.ArrayType)
 
-				arrv1 := array.Values[1].(*std.CometArray)
+				arrv1 := array.Values[1].(*std2.CometArray)
 				assert.Equal(t, 2, arrv1.Length)
 				assertInteger(t, arrv1.Values[0], 1)
 				assertInteger(t, arrv1.Values[1], 2)
@@ -595,8 +595,8 @@ func TestEvaluator_Eval_EvaluateArrayDeclaration(t *testing.T) {
 				var a = ["comet", "42"]
             `,
 			AssertFunc: func(evaluator *Evaluator) {
-				a := assertFoundInScope(t, evaluator, "a", std.ArrayType)
-				array := a.(*std.CometArray)
+				a := assertFoundInScope(t, evaluator, "a", std2.ArrayType)
+				array := a.(*std2.CometArray)
 				assert.Equal(t, 2, array.Length)
 
 				assertStr(t, array.Values[0], "comet")
@@ -623,8 +623,8 @@ func TestEvaluator_Eval_EvaluateArrayAccess(t *testing.T) {
 				var b = a[0]
             `,
 			AssertFunc: func(evaluator *Evaluator) {
-				b := assertFoundInScope(t, evaluator, "b", std.IntType)
-				bValue := b.(*std.CometInt)
+				b := assertFoundInScope(t, evaluator, "b", std2.IntType)
+				bValue := b.(*std2.CometInt)
 				assert.Equal(t, int64(0), bValue.Value)
 			},
 		},
@@ -634,8 +634,8 @@ func TestEvaluator_Eval_EvaluateArrayAccess(t *testing.T) {
 				var b = a[0]
             `,
 			AssertFunc: func(evaluator *Evaluator) {
-				b := assertFoundInScope(t, evaluator, "b", std.StrType)
-				bValue := b.(*std.CometStr)
+				b := assertFoundInScope(t, evaluator, "b", std2.StrType)
+				bValue := b.(*std2.CometStr)
 				assert.Equal(t, "12", bValue.Value)
 			},
 		},
@@ -647,8 +647,8 @@ func TestEvaluator_Eval_EvaluateArrayAccess(t *testing.T) {
 				var b = getArray()[0]
             `,
 			AssertFunc: func(evaluator *Evaluator) {
-				b := assertFoundInScope(t, evaluator, "b", std.IntType)
-				bValue := b.(*std.CometInt)
+				b := assertFoundInScope(t, evaluator, "b", std2.IntType)
+				bValue := b.(*std2.CometInt)
 				assert.Equal(t, int64(1), bValue.Value)
 			},
 		},
@@ -657,8 +657,8 @@ func TestEvaluator_Eval_EvaluateArrayAccess(t *testing.T) {
 				var b = [1, 2, 3][2]
             `,
 			AssertFunc: func(evaluator *Evaluator) {
-				b := assertFoundInScope(t, evaluator, "b", std.IntType)
-				bValue := b.(*std.CometInt)
+				b := assertFoundInScope(t, evaluator, "b", std2.IntType)
+				bValue := b.(*std2.CometInt)
 				assert.Equal(t, int64(3), bValue.Value)
 			},
 		},
@@ -668,8 +668,8 @@ func TestEvaluator_Eval_EvaluateArrayAccess(t *testing.T) {
 				var b = a[0][1] 
             `,
 			AssertFunc: func(evaluator *Evaluator) {
-				b := assertFoundInScope(t, evaluator, "b", std.IntType)
-				bValue := b.(*std.CometInt)
+				b := assertFoundInScope(t, evaluator, "b", std2.IntType)
+				bValue := b.(*std2.CometInt)
 				assert.Equal(t, int64(42), bValue.Value)
 			},
 		},
@@ -746,8 +746,8 @@ func TestEvaluator_Eval_EvaluateInstanceCreation(t *testing.T) {
             `,
 			AssertFunc: func(evaluator *Evaluator) {
 				tp := assertFoundType(t, evaluator, "A")
-				s := assertFoundInScope(t, evaluator, "a", std.ObjType)
-				p, ok := s.(*std.CometInstance)
+				s := assertFoundInScope(t, evaluator, "a", std2.ObjType)
+				p, ok := s.(*std2.CometInstance)
 				assert.True(t, ok)
 				assert.Equal(t, p.Struct, tp)
 				assert.Equal(t, 0, len(p.Fields))
@@ -762,10 +762,10 @@ func TestEvaluator_Eval_EvaluateInstanceCreation(t *testing.T) {
             `,
 			AssertFunc: func(evaluator *Evaluator) {
 				tp := assertFoundType(t, evaluator, "A")
-				sa := assertFoundInScope(t, evaluator, "a", std.ObjType)
-				sb := assertFoundInScope(t, evaluator, "b", std.ObjType)
-				pa, oka := sa.(*std.CometInstance)
-				pb, okb := sb.(*std.CometInstance)
+				sa := assertFoundInScope(t, evaluator, "a", std2.ObjType)
+				sb := assertFoundInScope(t, evaluator, "b", std2.ObjType)
+				pa, oka := sa.(*std2.CometInstance)
+				pb, okb := sb.(*std2.CometInstance)
 				assert.True(t, oka)
 				assert.True(t, okb)
 				assert.Equal(t, pa.Struct, tp)
@@ -801,13 +801,13 @@ func TestEvaluator_Eval_EvaluateMethodCall(t *testing.T) {
             `,
 			AssertFunc: func(evaluator *Evaluator) {
 				tp := assertFoundType(t, evaluator, "A")
-				s := assertFoundInScope(t, evaluator, "a", std.ObjType)
-				p, ok := s.(*std.CometInstance)
+				s := assertFoundInScope(t, evaluator, "a", std2.ObjType)
+				p, ok := s.(*std2.CometInstance)
 				assert.True(t, ok)
 				assert.Equal(t, p.Struct, tp)
 				assert.Equal(t, 0, len(p.Fields))
-				res := assertFoundInScope(t, evaluator, "res", std.IntType)
-				val, ok := res.(*std.CometInt)
+				res := assertFoundInScope(t, evaluator, "res", std2.IntType)
+				val, ok := res.(*std2.CometInt)
 				assert.True(t, ok)
 				assert.Equal(t, int64(12), val.Value)
 			},
@@ -824,13 +824,13 @@ func TestEvaluator_Eval_EvaluateMethodCall(t *testing.T) {
             `,
 			AssertFunc: func(evaluator *Evaluator) {
 				tp := assertFoundType(t, evaluator, "A")
-				s := assertFoundInScope(t, evaluator, "a", std.ObjType)
-				p, ok := s.(*std.CometInstance)
+				s := assertFoundInScope(t, evaluator, "a", std2.ObjType)
+				p, ok := s.(*std2.CometInstance)
 				assert.True(t, ok)
 				assert.Equal(t, p.Struct, tp)
 				assert.Equal(t, 0, len(p.Fields))
-				res := assertFoundInScope(t, evaluator, "res", std.IntType)
-				val, ok := res.(*std.CometInt)
+				res := assertFoundInScope(t, evaluator, "res", std2.IntType)
+				val, ok := res.(*std2.CometInt)
 				assert.True(t, ok)
 				assert.Equal(t, int64(30), val.Value)
 			},
@@ -849,19 +849,19 @@ func TestEvaluator_Eval_EvaluateMethodCall(t *testing.T) {
             `,
 			AssertFunc: func(evaluator *Evaluator) {
 				tp := assertFoundType(t, evaluator, "A")
-				s := assertFoundInScope(t, evaluator, "a", std.ObjType)
-				p, ok := s.(*std.CometInstance)
+				s := assertFoundInScope(t, evaluator, "a", std2.ObjType)
+				p, ok := s.(*std2.CometInstance)
 				assert.True(t, ok)
 				assert.Equal(t, p.Struct, tp)
 				assert.Equal(t, 0, len(p.Fields))
 				tp = assertFoundType(t, evaluator, "B")
-				s = assertFoundInScope(t, evaluator, "b", std.ObjType)
-				p, ok = s.(*std.CometInstance)
+				s = assertFoundInScope(t, evaluator, "b", std2.ObjType)
+				p, ok = s.(*std2.CometInstance)
 				assert.True(t, ok)
 				assert.Equal(t, p.Struct, tp)
 				assert.Equal(t, 0, len(p.Fields))
-				res := assertFoundInScope(t, evaluator, "res", std.IntType)
-				val, ok := res.(*std.CometInt)
+				res := assertFoundInScope(t, evaluator, "res", std2.IntType)
+				val, ok := res.(*std2.CometInt)
 				assert.True(t, ok)
 				assert.Equal(t, int64(36), val.Value)
 			},
@@ -891,12 +891,12 @@ func TestEvaluator_Eval_EvaluateFieldSetting(t *testing.T) {
             `,
 			AssertFunc: func(evaluator *Evaluator) {
 				tp := assertFoundType(t, evaluator, "A")
-				s := assertFoundInScope(t, evaluator, "a", std.ObjType)
-				p, ok := s.(*std.CometInstance)
+				s := assertFoundInScope(t, evaluator, "a", std2.ObjType)
+				p, ok := s.(*std2.CometInstance)
 				assert.True(t, ok)
 				assert.Equal(t, p.Struct, tp)
 				assert.Equal(t, 1, len(p.Fields))
-				v := p.Fields["hello"].(*std.CometInt)
+				v := p.Fields["hello"].(*std2.CometInt)
 				assert.Equal(t, int64(10), v.Value)
 			},
 		},
@@ -911,8 +911,8 @@ func TestEvaluator_Eval_EvaluateFieldSetting(t *testing.T) {
             `,
 			AssertFunc: func(evaluator *Evaluator) {
 				_ = assertFoundType(t, evaluator, "A")
-				s := assertFoundInScope(t, evaluator, "c", std.IntType)
-				value, ok := s.(*std.CometInt)
+				s := assertFoundInScope(t, evaluator, "c", std2.IntType)
+				value, ok := s.(*std2.CometInt)
 				assert.True(t, ok)
 				assert.Equal(t, int64(10), value.Value)
 			},
@@ -930,8 +930,8 @@ func TestEvaluator_Eval_EvaluateFieldSetting(t *testing.T) {
             `,
 			AssertFunc: func(evaluator *Evaluator) {
 				_ = assertFoundType(t, evaluator, "A")
-				s := assertFoundInScope(t, evaluator, "c", std.IntType)
-				value, ok := s.(*std.CometInt)
+				s := assertFoundInScope(t, evaluator, "c", std2.IntType)
+				value, ok := s.(*std2.CometInt)
 				assert.True(t, ok)
 				assert.Equal(t, int64(10), value.Value)
 			},
@@ -954,13 +954,13 @@ func TestEvaluator_Eval_EvaluateFieldSetting(t *testing.T) {
             `,
 			AssertFunc: func(evaluator *Evaluator) {
 				_ = assertFoundType(t, evaluator, "A")
-				s := assertFoundInScope(t, evaluator, "c", std.IntType)
-				p := assertFoundInScope(t, evaluator, "p", std.IntType)
-				value, ok := s.(*std.CometInt)
+				s := assertFoundInScope(t, evaluator, "c", std2.IntType)
+				p := assertFoundInScope(t, evaluator, "p", std2.IntType)
+				value, ok := s.(*std2.CometInt)
 				assert.True(t, ok)
 				assert.Equal(t, int64(10), value.Value)
 
-				value, ok = p.(*std.CometInt)
+				value, ok = p.(*std2.CometInt)
 				assert.True(t, ok)
 				assert.Equal(t, int64(42), value.Value)
 			},
@@ -976,38 +976,38 @@ func TestEvaluator_Eval_EvaluateFieldSetting(t *testing.T) {
 	}
 }
 
-func assertError(t *testing.T, v std.CometObject, ExpectedErrorMsg string) {
-	err, ok := v.(*std.CometError)
+func assertError(t *testing.T, v std2.CometObject, ExpectedErrorMsg string) {
+	err, ok := v.(*std2.CometError)
 	assert.True(t, ok)
 	assert.Equal(t, ExpectedErrorMsg, err.Message)
 }
 
-func assertBoolean(t *testing.T, v std.CometObject, expected bool) {
-	boolean, ok := v.(*std.CometBool)
+func assertBoolean(t *testing.T, v std2.CometObject, expected bool) {
+	boolean, ok := v.(*std2.CometBool)
 	assert.True(t, ok)
 	assert.Equal(t, expected, boolean.Value)
 }
 
-func assertInteger(t *testing.T, v std.CometObject, expected int64) {
-	integer, ok := v.(*std.CometInt)
+func assertInteger(t *testing.T, v std2.CometObject, expected int64) {
+	integer, ok := v.(*std2.CometInt)
 	assert.True(t, ok)
 	assert.Equal(t, expected, integer.Value)
 }
 
-func assertStr(t *testing.T, v std.CometObject, expected string) {
-	str, ok := v.(*std.CometStr)
+func assertStr(t *testing.T, v std2.CometObject, expected string) {
+	str, ok := v.(*std2.CometStr)
 	assert.True(t, ok)
 	assert.Equal(t, expected, str.Value)
 }
 
-func assertFoundInScope(t *testing.T, ev *Evaluator, name string, expectedType std.CometType) std.CometObject {
+func assertFoundInScope(t *testing.T, ev *Evaluator, name string, expectedType std2.CometType) std2.CometObject {
 	obj, found := ev.Scope.Lookup(name)
 	assert.True(t, found)
 	assert.True(t, expectedType == obj.Type())
 	return obj
 }
 
-func assertFoundType(t *testing.T, ev *Evaluator, name string) *std.CometStruct {
+func assertFoundType(t *testing.T, ev *Evaluator, name string) *std2.CometStruct {
 	obj, found := ev.Types[name]
 	assert.True(t, found)
 	return obj
@@ -1018,6 +1018,6 @@ func assertNotFoundType(t *testing.T, ev *Evaluator, name string) {
 	assert.False(t, found)
 }
 
-func parseOrDie(s string) parser.Node {
-	return parser.New(s).Parse()
+func parseOrDie(s string) parser2.Node {
+	return parser2.New(s).Parse()
 }

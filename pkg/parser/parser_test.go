@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"github.com/chermehdi/comet/lexer"
+	lexer2 "github.com/chermehdi/comet/pkg/lexer"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -224,7 +224,7 @@ func TestParser_Parse_SimpleMathExpressions(t *testing.T) {
 			Expr: "1 + 21",
 			Expected: []Node{
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(21)},
 			},
 		},
@@ -232,7 +232,7 @@ func TestParser_Parse_SimpleMathExpressions(t *testing.T) {
 			Expr: "1 - 21",
 			Expected: []Node{
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "-"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "-"}},
 				&NumberLiteral{ActualValue: int64(21)},
 			},
 		},
@@ -240,7 +240,7 @@ func TestParser_Parse_SimpleMathExpressions(t *testing.T) {
 			Expr: "1 * 21",
 			Expected: []Node{
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "*"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "*"}},
 				&NumberLiteral{ActualValue: int64(21)},
 			},
 		},
@@ -248,7 +248,7 @@ func TestParser_Parse_SimpleMathExpressions(t *testing.T) {
 			Expr: "1 / 21",
 			Expected: []Node{
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "/"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "/"}},
 				&NumberLiteral{ActualValue: int64(21)},
 			},
 		},
@@ -256,11 +256,11 @@ func TestParser_Parse_SimpleMathExpressions(t *testing.T) {
 			Expr: "1 + 2 * 3 - 4",
 			Expected: []Node{
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(2)},
-				&BinaryExpression{Op: lexer.Token{Literal: "*"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "*"}},
 				&NumberLiteral{ActualValue: int64(3)},
-				&BinaryExpression{Op: lexer.Token{Literal: "-"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "-"}},
 				&NumberLiteral{ActualValue: int64(4)},
 			},
 		},
@@ -275,10 +275,10 @@ func TestParser_Parse_SimpleMathExpressions(t *testing.T) {
 			Expr: "1 * (1 + 2)",
 			Expected: []Node{
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "*"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "*"}},
 				&ParenthesisedExpression{},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(2)},
 			},
 		},
@@ -286,7 +286,7 @@ func TestParser_Parse_SimpleMathExpressions(t *testing.T) {
 			Expr: "1..2",
 			Expected: []Node{
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
+				&BinaryExpression{Op: lexer2.Token{Literal: ".."}},
 				&NumberLiteral{ActualValue: int64(2)},
 			},
 		},
@@ -294,7 +294,7 @@ func TestParser_Parse_SimpleMathExpressions(t *testing.T) {
 			Expr: "1..a",
 			Expected: []Node{
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
+				&BinaryExpression{Op: lexer2.Token{Literal: ".."}},
 				&IdentifierExpression{Name: "a"},
 			},
 		},
@@ -321,7 +321,7 @@ func TestParser_ParseDeclarationStatement(t *testing.T) {
 			Expr: "var a = 1",
 			Expected: []Node{
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "a"},
+					Identifier: lexer2.Token{Literal: "a"},
 				},
 				&NumberLiteral{ActualValue: int64(1)},
 			},
@@ -330,10 +330,10 @@ func TestParser_ParseDeclarationStatement(t *testing.T) {
 			Expr: "var a = 1 + 12",
 			Expected: []Node{
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "a"},
+					Identifier: lexer2.Token{Literal: "a"},
 				},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(12)},
 			},
 		},
@@ -342,17 +342,17 @@ func TestParser_ParseDeclarationStatement(t *testing.T) {
                    var b = (a + 12)`,
 			Expected: []Node{
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "a"},
+					Identifier: lexer2.Token{Literal: "a"},
 				},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(12)},
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "b"},
+					Identifier: lexer2.Token{Literal: "b"},
 				},
 				&ParenthesisedExpression{},
 				&IdentifierExpression{Name: "a"},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(12)},
 			},
 		},
@@ -388,7 +388,7 @@ func TestParser_ParseReturnStatement(t *testing.T) {
 			Expected: []Node{
 				&ReturnStatement{},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "*"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "*"}},
 				&NumberLiteral{ActualValue: int64(2)},
 			},
 		},
@@ -397,10 +397,10 @@ func TestParser_ParseReturnStatement(t *testing.T) {
 			Expected: []Node{
 				&ReturnStatement{},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&ParenthesisedExpression{},
 				&NumberLiteral{ActualValue: int64(2)},
-				&BinaryExpression{Op: lexer.Token{Literal: "-"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "-"}},
 				&NumberLiteral{ActualValue: int64(1)},
 			},
 		},
@@ -417,7 +417,7 @@ func TestParser_ParseReturnStatement(t *testing.T) {
 				&ReturnStatement{},
 				&ParenthesisedExpression{},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&IdentifierExpression{Name: "a"},
 			},
 		},
@@ -476,14 +476,14 @@ func TestParser_ParsePrefixExpression(t *testing.T) {
 		{
 			Expr: "-1",
 			Expected: []Node{
-				&PrefixExpression{Op: lexer.Token{Literal: "-"}},
+				&PrefixExpression{Op: lexer2.Token{Literal: "-"}},
 				&NumberLiteral{ActualValue: 1},
 			},
 		},
 		{
 			Expr: "!true",
 			Expected: []Node{
-				&PrefixExpression{Op: lexer.Token{Literal: "!"}},
+				&PrefixExpression{Op: lexer2.Token{Literal: "!"}},
 				&BooleanLiteral{ActualValue: true},
 			},
 		},
@@ -516,10 +516,10 @@ func TestParser_ParsePrefixOperators(t *testing.T) {
 			Expected: []Node{
 				&BlockStatement{},
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "a"},
+					Identifier: lexer2.Token{Literal: "a"},
 				},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(2)},
 				&ReturnStatement{},
 				&IdentifierExpression{Name: "a"},
@@ -537,10 +537,10 @@ func TestParser_ParsePrefixOperators(t *testing.T) {
 			Expected: []Node{
 				&BlockStatement{},
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "a"},
+					Identifier: lexer2.Token{Literal: "a"},
 				},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(2)},
 			},
 		},
@@ -558,17 +558,17 @@ func TestParser_ParsePrefixOperators(t *testing.T) {
 				&BlockStatement{},
 				&BlockStatement{},
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "a"},
+					Identifier: lexer2.Token{Literal: "a"},
 				},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(2)},
 				&BlockStatement{},
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "b"},
+					Identifier: lexer2.Token{Literal: "b"},
 				},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(2)},
 				&ReturnStatement{},
 				&IdentifierExpression{Name: "a"},
@@ -602,7 +602,7 @@ func TestParser_ParseAssignExpression(t *testing.T) {
 			Expected: []Node{
 				&AssignExpression{VarName: "a"},
 				&NumberLiteral{ActualValue: int64(10)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(1)},
 			},
 		},
@@ -634,10 +634,10 @@ func TestParser_ParseBlockStatement(t *testing.T) {
 			Expected: []Node{
 				&BlockStatement{},
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "a"},
+					Identifier: lexer2.Token{Literal: "a"},
 				},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(2)},
 				&ReturnStatement{},
 				&IdentifierExpression{Name: "a"},
@@ -655,10 +655,10 @@ func TestParser_ParseBlockStatement(t *testing.T) {
 			Expected: []Node{
 				&BlockStatement{},
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "a"},
+					Identifier: lexer2.Token{Literal: "a"},
 				},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(2)},
 			},
 		},
@@ -676,17 +676,17 @@ func TestParser_ParseBlockStatement(t *testing.T) {
 				&BlockStatement{},
 				&BlockStatement{},
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "a"},
+					Identifier: lexer2.Token{Literal: "a"},
 				},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(2)},
 				&BlockStatement{},
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "b"},
+					Identifier: lexer2.Token{Literal: "b"},
 				},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(2)},
 				&ReturnStatement{},
 				&IdentifierExpression{Name: "a"},
@@ -720,7 +720,7 @@ func TestParser_ParseIfStatement(t *testing.T) {
 			Expected: []Node{
 				&IfStatement{},
 				&IdentifierExpression{Name: "a"},
-				&BinaryExpression{Op: lexer.Token{Literal: "=="}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "=="}},
 				&NumberLiteral{ActualValue: int64(1)},
 				&BlockStatement{},
 				&BlockStatement{}, // accounting for the then empty block.
@@ -735,14 +735,14 @@ func TestParser_ParseIfStatement(t *testing.T) {
 			Expected: []Node{
 				&IfStatement{},
 				&IdentifierExpression{Name: "a"},
-				&BinaryExpression{Op: lexer.Token{Literal: "=="}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "=="}},
 				&NumberLiteral{ActualValue: int64(1)},
 				&BlockStatement{}, // if close
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "a"},
+					Identifier: lexer2.Token{Literal: "a"},
 				},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(2)},
 				&BlockStatement{}, // accounting for the then empty block.
 			},
@@ -757,14 +757,14 @@ func TestParser_ParseIfStatement(t *testing.T) {
 				&IfStatement{},
 				&ParenthesisedExpression{},
 				&IdentifierExpression{Name: "a"},
-				&BinaryExpression{Op: lexer.Token{Literal: "=="}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "=="}},
 				&IdentifierExpression{Name: "b"},
 				&BlockStatement{}, // if close
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "a"},
+					Identifier: lexer2.Token{Literal: "a"},
 				},
 				&NumberLiteral{ActualValue: int64(1)},
-				&BinaryExpression{Op: lexer.Token{Literal: "+"}},
+				&BinaryExpression{Op: lexer2.Token{Literal: "+"}},
 				&NumberLiteral{ActualValue: int64(2)},
 				&BlockStatement{}, // accounting for the then empty block.
 			},
@@ -800,7 +800,7 @@ func TestParser_ParseForStatement(t *testing.T) {
 				// TODO: a placeholder identifier should be a singleton to avoid instance bloat.
 				&IdentifierExpression{Name: "__empty__"},
 				&NumberLiteral{ActualValue: int64(0)},
-				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
+				&BinaryExpression{Op: lexer2.Token{Literal: ".."}},
 				&NumberLiteral{ActualValue: int64(2)},
 				&BlockStatement{},
 			},
@@ -815,7 +815,7 @@ func TestParser_ParseForStatement(t *testing.T) {
 				&IdentifierExpression{Name: "k"},
 				&IdentifierExpression{Name: "v"},
 				&NumberLiteral{ActualValue: int64(0)},
-				&BinaryExpression{Op: lexer.Token{Literal: ".."}},
+				&BinaryExpression{Op: lexer2.Token{Literal: ".."}},
 				&NumberLiteral{ActualValue: int64(2)},
 				&BlockStatement{},
 			},
@@ -930,7 +930,7 @@ func TestParser_Parse_ParseFunctionCall(t *testing.T) {
 			Expected: []Node{
 				&CallExpression{Name: "foo"},
 				&NumberLiteral{1},
-				&BinaryExpression{Op: lexer.Token{Literal: lexer.Plus}},
+				&BinaryExpression{Op: lexer2.Token{Literal: lexer2.Plus}},
 				&NumberLiteral{42},
 				&IdentifierExpression{"java"},
 				&BooleanLiteral{
@@ -943,10 +943,10 @@ func TestParser_Parse_ParseFunctionCall(t *testing.T) {
 			var result = foo(1 + 42, java, true)
 		`,
 			Expected: []Node{
-				&DeclarationStatement{Identifier: lexer.Token{Literal: "result"}},
+				&DeclarationStatement{Identifier: lexer2.Token{Literal: "result"}},
 				&CallExpression{Name: "foo"},
 				&NumberLiteral{1},
-				&BinaryExpression{Op: lexer.Token{Literal: lexer.Plus}},
+				&BinaryExpression{Op: lexer2.Token{Literal: lexer2.Plus}},
 				&NumberLiteral{42},
 				&IdentifierExpression{"java"},
 				&BooleanLiteral{
@@ -1183,7 +1183,7 @@ func TestParser_Parse_ParseNewCall(t *testing.T) {
 		 `,
 			Expected: []Node{
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "a"},
+					Identifier: lexer2.Token{Literal: "a"},
 				},
 				&NewCallExpr{
 					Type: "Data",
@@ -1196,7 +1196,7 @@ func TestParser_Parse_ParseNewCall(t *testing.T) {
 		 `,
 			Expected: []Node{
 				&DeclarationStatement{
-					Identifier: lexer.Token{Literal: "a"},
+					Identifier: lexer2.Token{Literal: "a"},
 				},
 				&NewCallExpr{
 					Type: "Data",
